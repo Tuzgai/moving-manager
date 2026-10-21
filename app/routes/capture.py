@@ -7,13 +7,11 @@ activity. Mobile-first layout — the whole thing fits in a phone viewport.
 """
 from __future__ import annotations
 
-import json
 import sqlite3
-from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from slugify import slugify
 
@@ -56,14 +54,14 @@ def capture(
     house = items_repo.get_house(conn, house_id)
     if not house:
         return RedirectResponse(url="/capture", status_code=302)
-    # Count photos already attached today, for the "This tour · N photos" line
-    today = datetime.now().strftime("%Y-%m-%d")
+    # Count photos already attached today (local day), for the "This tour" line
     photos = conn.execute(
         "SELECT f.id, f.original_name, f.thumb_path FROM item_files iif"
         " JOIN files f ON f.id = iif.file_id"
-        " WHERE iif.item_id=? AND iif.role='photo' AND date(f.uploaded_at)=?"
+        " WHERE iif.item_id=? AND iif.role='photo'"
+        " AND date(f.uploaded_at, 'localtime') = date('now', 'localtime')"
         " ORDER BY f.uploaded_at DESC",
-        (house_id, today),
+        (house_id,),
     ).fetchall()
     return _templates(request).TemplateResponse(request, "capture.html", {
         "request": request, "house": house, "current_user": who,
@@ -89,25 +87,19 @@ async def save(
 
     # Save each photo to buy/<house-slug>/<original>, make thumb if image.
     photo_names: list[str] = []
+    photo_ids: list[int] = []
     for p in photos or []:
         if not p or not p.filename:
             continue
         rel = PurePosixPath("buy") / slugify(house.title) / p.filename
-        rel = files_repo.ensure_unique(cfg.files_root, rel)
-        size = files_repo.write_file(cfg.files_root, rel, p.file)
-        mime = p.content_type or files_repo.guess_mime(p.filename)
-        thumb_rel = None
-        if files_repo.is_image(mime):
-            t = files_repo.make_thumbnail(cfg.files_root, rel)
-            thumb_rel = str(t) if t else None
-        fid = files_repo.insert(
-            conn, original_name=p.filename, stored_path=str(rel),
-            size_bytes=size, mime_type=mime,
-            tags=json.dumps(["Tour", "Photos"]), uploaded_by=who,
-            thumb_path=thumb_rel,
-        )
+        try:
+            fid = files_repo.save_upload(conn, cfg.files_root, rel, p,
+                                         uploaded_by=who, tags=["Tour", "Photos"])
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{p.filename} is over 50 MB")
         files_repo.link_to_item(conn, fid, house_id, role="photo")
         photo_names.append(p.filename)
+        photo_ids.append(fid)
 
     # Compose a note body. Rating + chips are prefix lines; freeform text follows.
     prefix_lines = []
@@ -122,12 +114,14 @@ async def save(
     if chips:
         prefix_lines.append("**Tags:** " + ", ".join(chips))
     if photo_names:
-        prefix_lines.append(f"**Photos:** {len(photo_names)} ({', '.join(photo_names[:4])}"
-                            + (f" +{len(photo_names)-4} more" if len(photo_names) > 4 else "") + ")")
+        prefix_lines.append(f"**Photos:** {len(photo_names)}")
     body = "\n".join(prefix_lines + ([note.strip()] if note.strip() else []))
 
     if body:
-        notes_repo.add(conn, item_id=house_id, author=who, body_md=body)
+        note_id = notes_repo.add(conn, item_id=house_id, author=who, body_md=body)
+        for fid in photo_ids:
+            conn.execute("INSERT OR IGNORE INTO note_files(note_id, file_id) VALUES (?, ?)",
+                         (note_id, fid))
         activity_repo.log(
             conn, actor=who, verb="tour-note",
             text=f"captured a tour note on {house.title}", item_id=house_id,

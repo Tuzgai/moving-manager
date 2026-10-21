@@ -32,7 +32,7 @@ DEFAULT_TAGS = [
     "Closing", "Insurance", "Taxes", "Records",
 ]
 
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024   # 50 MB
+MAX_UPLOAD_BYTES = files_repo.MAX_UPLOAD_BYTES
 
 
 def _templates(request: Request):
@@ -131,34 +131,12 @@ async def upload(
     for upload in files:
         if not upload or not upload.filename:
             continue
-        # Guard against oversize uploads. Starlette doesn't short-circuit —
-        # we read in chunks via write_file, so size check happens after write;
-        # we delete on overrun. For now, trust the content-length header: if
-        # present and > cap, refuse without touching disk.
-        cl = request.headers.get("content-length")
-        if cl and int(cl) > MAX_UPLOAD_BYTES * len(files) + 2048:
-            # Loose per-batch check — the real per-file guard is below.
-            raise HTTPException(status_code=413, detail=f"Upload exceeds {MAX_UPLOAD_BYTES} bytes")
-
         rel = _pick_path(link_item, upload.filename)
-        rel = files_repo.ensure_unique(cfg.files_root, rel)
-        size = files_repo.write_file(cfg.files_root, rel, upload.file)
-        if size > MAX_UPLOAD_BYTES:
-            (cfg.files_root / rel).unlink(missing_ok=True)
-            raise HTTPException(status_code=413, detail=f"File exceeds {MAX_UPLOAD_BYTES // (1024*1024)} MB cap")
-
-        mime = upload.content_type or files_repo.guess_mime(upload.filename)
-        thumb_rel = None
-        if files_repo.is_image(mime):
-            thumb = files_repo.make_thumbnail(cfg.files_root, rel)
-            thumb_rel = str(thumb) if thumb else None
-
-        file_id = files_repo.insert(
-            conn, original_name=upload.filename, stored_path=str(rel),
-            size_bytes=size, mime_type=mime,
-            tags=json.dumps(parsed_tags), uploaded_by=who,
-            thumb_path=thumb_rel,
-        )
+        try:
+            file_id = files_repo.save_upload(conn, cfg.files_root, rel, upload,
+                                             uploaded_by=who, tags=parsed_tags)
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{upload.filename} is over {MAX_UPLOAD_BYTES // (1024*1024)} MB")
         if link_id:
             files_repo.link_to_item(conn, file_id, link_id)
         activity_repo.log(
@@ -193,12 +171,17 @@ def serve_file(
     ).fetchone()
     if not row:
         raise HTTPException(status_code=404)
-    # stored_path came from our own code at upload time (sanitized via slugify
-    # + known prefixes), never from user input. Safe to join against files_root.
+    # stored_path was composed and sanitized by save_upload, never taken raw
+    # from a request, so joining it to files_root is safe.
     path = cfg.files_root / row["stored_path"]
     if not path.exists():
         raise HTTPException(status_code=404)
-    return FileResponse(path, media_type=row["mime_type"], filename=row["original_name"])
+    mime = row["mime_type"]
+    return FileResponse(
+        path, media_type=mime, filename=row["original_name"],
+        content_disposition_type="inline" if files_repo.is_inline_safe(mime) else "attachment",
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
 
 
 @router.get("/documents/thumb/{file_id}")

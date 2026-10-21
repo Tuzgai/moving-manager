@@ -18,6 +18,7 @@ from typing import BinaryIO, Iterable
 
 from slugify import slugify
 
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 IMAGE_MIMES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/heic"}
 THUMB_LONG_EDGE = 400          # px
 THUMB_QUALITY = 85
@@ -87,6 +88,48 @@ def insert(
         (original_name, stored_path, size_bytes, mime_type, tags, uploaded_by, thumb_path),
     )
     return int(cur.lastrowid)
+
+
+class UploadTooLarge(Exception):
+    pass
+
+
+def safe_rel(rel: PurePosixPath) -> PurePosixPath:
+    """Upload paths embed the client-supplied filename. Drop '..'/'.' segments,
+    treat backslashes as separators, and strip leading dots from the filename,
+    so nothing can land outside files_root or become a hidden file."""
+    parts = [p for p in str(rel).replace("\\", "/").split("/") if p not in ("", ".", "..")]
+    if not parts:
+        return PurePosixPath("unnamed")
+    name = parts[-1].lstrip(".") or "unnamed"
+    return PurePosixPath(*parts[:-1], name)
+
+
+def save_upload(conn: sqlite3.Connection, root: Path, rel: PurePosixPath, upload, *,
+                uploaded_by: str, tags: list[str]) -> int:
+    """Write an UploadFile under root/rel (suffixed on collision), thumbnail it
+    if it's an image, insert the files row, and return its id."""
+    rel = safe_rel(rel)
+    rel = ensure_unique(root, rel)
+    size = write_file(root, rel, upload.file)
+    if size > MAX_UPLOAD_BYTES:
+        (root / rel).unlink(missing_ok=True)
+        raise UploadTooLarge(upload.filename)
+    mime = upload.content_type or guess_mime(upload.filename)
+    thumb = make_thumbnail(root, rel) if is_image(mime) else None
+    return insert(
+        conn, original_name=upload.filename, stored_path=str(rel), size_bytes=size,
+        mime_type=mime, tags=json.dumps(tags), uploaded_by=uploaded_by,
+        thumb_path=str(thumb) if thumb else None,
+    )
+
+
+def is_inline_safe(mime: str) -> bool:
+    """Types the browser may render in-page. SVG and HTML can run script, so
+    everything else is served as a download."""
+    return (mime.startswith("image/") and mime != "image/svg+xml") or mime in (
+        "application/pdf", "text/plain",
+    )
 
 
 def guess_mime(name: str) -> str:

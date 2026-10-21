@@ -115,8 +115,9 @@
       {% set t = sel.task %}
 
       <form method="post" action="/selling/{{ t.id }}/update" class="card">
-        <input type="hidden" name="title" value="{{ t.title }}">
-        <h2 style="margin: 0; font-size: 20px; font-weight: 600">{{ t.title }}</h2>
+        <label for="task-title" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Task title</label>
+        <input id="task-title" name="title" value="{{ t.title }}" required
+               style="width: 100%; font-size: 20px; font-weight: 600; border-color: transparent; padding: 0 6px; margin-left: -6px">
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 14px">
           <label style="display: flex; flex-direction: column; gap: 4px">
             <span style="font-size: 12px; color: var(--ink-mute)">Status</span>
@@ -145,7 +146,10 @@
             <input name="due_date" type="date" value="{{ t.due_date }}">
           </label>
         </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+        <div style="display: flex; justify-content: space-between; margin-top: 10px">
+          <button type="submit" formaction="/selling/{{ t.id }}/delete" formnovalidate
+                  class="btn ghost" style="min-height: 36px; color: var(--warn-fg)"
+                  onclick="return confirm('Delete this task and its quotes and notes?')">Delete task</button>
           <button type="submit" class="btn ghost" style="min-height: 36px">Save</button>
         </div>
       </form>
@@ -252,9 +256,9 @@
         {% for n in sel.notes %}
           <div style="padding: 10px 0; border-top: 1px solid var(--line-soft); margin-top: 10px">
             <div style="font-size: 12px; color: var(--ink-mute)">
-              <strong style="color: var(--ink); font-weight: 600">{{ n['author'] }}</strong> · {{ n['created_at'] }}
+              <strong style="color: var(--ink); font-weight: 600">{{ n['author'] }}</strong> · {{ n['created_at'] | local_dt }}
             </div>
-            <div style="white-space: pre-line">{{ n['body_md'] }}</div>
+            <div class="md">{{ n['body_md'] | md }}</div>
           </div>
         {% endfor %}
       </div>

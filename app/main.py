@@ -20,7 +20,10 @@ from fastapi.templating import Jinja2Templates
 from app import config as app_config
 from app import db
 from app.jobs.backup import scheduler as backup_scheduler
-from app.util import avatar_colors, days_from_today, fmt_date, initial_of, mon_day, money, money_short
+from app.util import (
+    avatar_colors, days_from_today, fmt_date, initial_of, local_date, local_dt, md, mon_day,
+    money, money_short,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
@@ -49,9 +52,13 @@ templates = Jinja2Templates(directory=str(PROJECT_ROOT / "app" / "templates"))
 for name, fn in {
     "money": money, "money_short": money_short, "fmt_date": fmt_date,
     "mon_day": mon_day, "initial_of": initial_of, "avatar_colors": avatar_colors,
-    "days_from_today": days_from_today,
+    "days_from_today": days_from_today, "local_dt": local_dt, "local_date": local_date,
+    "md": md,
 }.items():
     templates.env.filters[name] = fn
+# Cache-buster for app.css: browsers (phones especially) otherwise keep a
+# stale stylesheet after an update. Changes whenever the file changes.
+templates.env.globals["css_v"] = int((PROJECT_ROOT / "app" / "static" / "app.css").stat().st_mtime)
 app.state.templates = templates
 
 app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "app" / "static")), name="static")

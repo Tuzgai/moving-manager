@@ -30,7 +30,7 @@
             <a href="{{ row.href }}" style="font-weight: 500">{{ row.title }}</a>
             <span class="pill" style="background: var(--line-soft); color: var(--ink-mute)">{{ row.badge }}</span>
           </div>
-          {% if row.snip %}<div style="color: var(--ink-mute); font-size: 13px; margin-top: 2px">{{ row.snip | safe }}</div>{% endif %}
+          {% if row.snip %}<div style="color: var(--ink-mute); font-size: 13px; margin-top: 2px">{{ row.snip }}</div>{% endif %}
         </div>
       {% endfor %}
     </section>

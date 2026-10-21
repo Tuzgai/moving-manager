@@ -26,7 +26,7 @@ Config lives in `config.toml`; override per-machine with `config.local.toml` (gi
 uv run python scripts/seed.py
 ```
 
-This wipes and reloads the DB with the data from the mockups so you can click around immediately.
+This loads the data from the mockups so you can click around immediately. It refuses to run if the database already has anything in it; `--force` wipes the database first, so never use it once you've entered real data.
 
 ## Tailscale
 

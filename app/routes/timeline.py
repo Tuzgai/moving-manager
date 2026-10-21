@@ -41,7 +41,7 @@ def timeline(
         rows = conn.execute(
             "SELECT kd.*, i.title AS item_title, i.type AS item_type"
             " FROM key_dates kd LEFT JOIN items i ON i.id = kd.item_id"
-            " WHERE on_date >= date('now') ORDER BY on_date"
+            " WHERE on_date >= date('now', 'localtime') ORDER BY on_date"
         ).fetchall()
 
     # Group by YYYY-MM, keeping chronological order via a list

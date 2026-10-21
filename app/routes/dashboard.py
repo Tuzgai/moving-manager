@@ -44,7 +44,7 @@ def _target_list_date(conn: sqlite3.Connection) -> str | None:
         return row["on_date"]
     row = conn.execute(
         "SELECT on_date FROM key_dates"
-        " WHERE category='sell' AND on_date >= date('now')"
+        " WHERE category='sell' AND on_date >= date('now', 'localtime')"
         " ORDER BY on_date LIMIT 1"
     ).fetchone()
     return row["on_date"] if row else None

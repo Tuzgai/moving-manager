@@ -84,7 +84,7 @@
         {{ avatar(a['actor']) }}
         <div style="min-width: 0">
           <div><strong style="font-weight: 600">{{ a['actor'] }}</strong> {{ a['text'] }}</div>
-          <div style="color: var(--ink-mute); font-size: 12px">{{ a['created_at'] }}</div>
+          <div style="color: var(--ink-mute); font-size: 12px">{{ a['created_at'] | local_dt }}</div>
         </div>
       </div>
     {% else %}

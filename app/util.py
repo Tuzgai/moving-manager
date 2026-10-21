@@ -1,7 +1,60 @@
 """Small template-friendly helpers."""
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
+
+from markdown_it import MarkdownIt
+from markupsafe import Markup, escape
+
+# html=False makes markdown-it escape any raw HTML in notes; its default link
+# validator already refuses javascript:/vbscript:/data: URLs.
+_md = MarkdownIt("commonmark", {"html": False, "breaks": True})
+
+
+def md(text: str | None) -> Markup:
+    return Markup(_md.render(text or ""))
+
+
+def _to_local(s: str | None) -> datetime | None:
+    """SQLite datetime('now') strings are UTC; convert to the server's local zone."""
+    if not s:
+        return None
+    try:
+        dt = datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    return dt.replace(tzinfo=timezone.utc).astimezone()
+
+
+def local_dt(s: str | None) -> str:
+    dt = _to_local(s)
+    if dt is None:
+        return s or ""
+    clock = dt.strftime("%I:%M %p").lstrip("0").lower()
+    today = date.today()
+    if dt.date() == today:
+        return f"Today, {clock}"
+    if dt.date() == today - timedelta(days=1):
+        return f"Yesterday, {clock}"
+    day = f"{dt.strftime('%b')} {dt.day}"
+    if dt.year != today.year:
+        day += f", {dt.year}"
+    return f"{day}, {clock}"
+
+
+def local_date(s: str | None) -> str:
+    dt = _to_local(s)
+    if dt is None:
+        return (s or "")[:10]
+    out = f"{dt.strftime('%b')} {dt.day}"
+    return out if dt.year == date.today().year else f"{out}, {dt.year}"
+
+
+def highlight_snippet(snip: str | None) -> Markup:
+    """FTS snippets carry \\x02/\\x03 around matches. Escape the user text
+    first, then turn the markers into <mark> tags."""
+    safe = str(escape(snip or ""))
+    return Markup(safe.replace("\x02", "<mark>").replace("\x03", "</mark>"))
 
 
 def money(cents: int | None) -> str:

@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse
 from app.deps import current_user, get_db
 from app.repo import search as search_repo
 from app.routes._common import page_ctx
+from app.util import highlight_snippet
 
 router = APIRouter()
 
@@ -46,8 +47,9 @@ def search(
                 href, badge = f"/selling?task={it['id']}", "Task"
             else:
                 href, badge = "/", "Item"
+            # An item's indexed body is its tag list; not worth showing as a snippet.
             rows_by_kind["item"].append({
-                "title": it["title"], "snip": r["snip"], "href": href, "badge": badge,
+                "title": it["title"], "snip": "", "href": href, "badge": badge,
             })
         elif r["kind"] == "note":
             parent = conn.execute(
@@ -64,11 +66,11 @@ def search(
                 href = "/"
             rows_by_kind["note"].append({
                 "title": f"Note on {parent['title']}",
-                "snip": r["snip"], "href": href, "badge": "Note",
+                "snip": highlight_snippet(r["snip"]), "href": href, "badge": "Note",
             })
         elif r["kind"] == "file":
             rows_by_kind["file"].append({
-                "title": r["title"], "snip": r["snip"],
+                "title": r["title"], "snip": highlight_snippet(r["snip"]),
                 "href": f"/documents/file/{r['ref_id']}", "badge": "File",
             })
 

@@ -11,7 +11,7 @@ import sqlite3
 from collections import defaultdict
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import Config
@@ -228,22 +228,13 @@ async def add_quote(
         it = items_repo.get(conn, task_id)
         task_slug = (it.title if it else f"task-{task_id}")
         rel = files_repo.quote_path(task_slug, vendor, document.filename)
-        rel = files_repo.ensure_unique(cfg.files_root, rel)
-        size = files_repo.write_file(cfg.files_root, rel, document.file)
-        file_id = files_repo.insert(
-            conn,
-            original_name=document.filename,
-            stored_path=str(rel),
-            size_bytes=size,
-            mime_type=document.content_type or files_repo.guess_mime(document.filename),
-            tags='["Quotes"]',
-            uploaded_by=who,
-        )
+        try:
+            file_id = files_repo.save_upload(conn, cfg.files_root, rel, document,
+                                             uploaded_by=who, tags=["Quotes"])
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{document.filename} is over 50 MB")
         # Also expose it on the task so the Documents page can show "linked to <task>"
-        conn.execute(
-            "INSERT OR IGNORE INTO item_files(item_id, file_id, role) VALUES (?, ?, 'quote_doc')",
-            (task_id, file_id),
-        )
+        files_repo.link_to_item(conn, file_id, task_id, role="quote_doc")
 
     quotes_repo.add(
         conn, task_id=task_id,
@@ -262,6 +253,20 @@ async def add_quote(
             item_id=task_id,
         )
     return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
+
+
+@router.post("/selling/{task_id}/delete")
+def delete_task(
+    task_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+):
+    """Removes the task, its quotes and notes. Quote files stay in Documents."""
+    it = items_repo.get(conn, task_id)
+    if it and it.type == "task":
+        conn.execute("DELETE FROM items WHERE id=?", (task_id,))
+        activity_repo.log(conn, actor=who, verb="deleted", text=f"deleted task {it.title}")
+    return RedirectResponse(url="/selling", status_code=303)
 
 
 @router.post("/selling/{task_id}/complete")

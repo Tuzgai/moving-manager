@@ -1,7 +1,8 @@
-"""Seed script: wipes and reloads the DB with the mockup sample data.
+"""Seed script: loads the mockup sample data into an empty DB.
 
 Run with:
-    uv run python scripts/seed.py
+    uv run python scripts/seed.py           # refuses if the DB has any data
+    uv run python scripts/seed.py --force   # wipes everything first
 
 Data comes straight from the mockups' renderVals() scripts, with [Partner] -> Ashley.
 """
@@ -209,19 +210,42 @@ def seed(conn):
     log(conn, actor="Stuart", text="uploaded Current mortgage statement (PDF)",
         verb="uploaded-file", created_at="2026-10-18 12:00:00")
 
+    # Seed timestamps above are written as local wall-clock times; the app
+    # stores UTC (SQLite datetime('now')). The 'utc' modifier converts.
+    conn.execute("UPDATE notes SET created_at = datetime(created_at, 'utc')")
+    conn.execute("UPDATE activity SET created_at = datetime(created_at, 'utc')")
+
     print(f"Seeded: {len(houses_data)} houses, {len(tasks_data)} tasks, "
           f"{conn.execute('SELECT COUNT(*) FROM quotes').fetchone()[0]} quotes, "
           f"{conn.execute('SELECT COUNT(*) FROM notes').fetchone()[0]} notes.")
 
 
-def main():
+def has_data(conn) -> bool:
+    return any(
+        conn.execute(f"SELECT EXISTS(SELECT 1 FROM {t})").fetchone()[0]
+        for t in ("items", "files", "contacts", "key_dates")
+    )
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    p = argparse.ArgumentParser(description="Load the mockup sample data.")
+    p.add_argument("--force", action="store_true",
+                   help="wipe an existing database first (destroys real data)")
+    args = p.parse_args(argv)
+
     cfg = app_config.load()
     conn = db.init(cfg.db_path)
     try:
+        if has_data(conn) and not args.force:
+            print(f"{cfg.db_path} already has data; refusing to wipe it. "
+                  "Re-run with --force if you really want the sample data instead.")
+            return 1
         seed(conn)
     finally:
         conn.close()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

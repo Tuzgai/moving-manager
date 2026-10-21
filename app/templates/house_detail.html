@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import house_pill, avatar %}
+{% from "_macros.html" import avatar %}
 
 {% block title %}Household Hub — {{ house.title }}{% endblock %}
 
@@ -11,24 +11,40 @@
     <h1 style="margin: 0; font-size: 26px; font-weight: 600">{{ house.title }}</h1>
     <div style="color: var(--ink-mute)">
       {{ house.address or '—' }}
-      {% if house.listing_url %} · <a href="{{ house.listing_url }}" target="_blank" rel="noopener">Listing ↗</a>{% endif %}
-      {% for l in house.other_links %} · <a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.label }} ↗</a>{% endfor %}
+      {% if house.listing_url %} · <a href="{{ house.listing_url }}" target="_blank" rel="noopener noreferrer">Listing ↗</a>{% endif %}
+      {% for l in house.other_links %} · <a href="{{ l.url }}" target="_blank" rel="noopener noreferrer">{{ l.label }} ↗</a>{% endfor %}
     </div>
+    <a href="/capture/{{ house.id }}" class="btn ghost"
+       style="display: inline-flex; align-items: center; margin-top: 10px; text-decoration: none; min-height: 36px">
+      Start tour capture
+    </a>
   </div>
   <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
-    <div style="display: flex; flex-direction: column; gap: 4px">
+    <form method="post" action="/houses/{{ house.id }}/status" style="display: flex; flex-direction: column; gap: 4px">
       <label for="status" style="font-size: 12px; color: var(--ink-mute)">Status</label>
-      <select id="status">
+      <select id="status" name="status" onchange="this.form.submit()">
         {% for s in statuses %}<option {% if s == house.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
       </select>
-    </div>
+    </form>
     <div style="display: flex; gap: 8px">
       {% for u in users %}
         <div style="padding: 6px 12px; border: 1px solid var(--line); background: #fff; border-radius: 6px; text-align: center">
           <div style="font-size: 11px; color: var(--ink-mute)">{{ u }}</div>
-          <div style="font-family: var(--mono); font-weight: 500">
-            {{ house.ratings.get(u, '–') }} / 5
-          </div>
+          {% if u == current_user %}
+            <form method="post" action="/houses/{{ house.id }}/rating">
+              <select name="rating" onchange="this.form.submit()" aria-label="Your rating"
+                      style="min-height: 28px; padding: 0 4px; font-family: var(--mono); border: 0">
+                <option value="">– / 5</option>
+                {% for n in range(1, 6) %}
+                  <option value="{{ n }}" {% if house.ratings.get(u) == n %}selected{% endif %}>{{ n }} / 5</option>
+                {% endfor %}
+              </select>
+            </form>
+          {% else %}
+            <div style="font-family: var(--mono); font-weight: 500; min-height: 28px; line-height: 28px">
+              {{ house.ratings.get(u, '–') }} / 5
+            </div>
+          {% endif %}
         </div>
       {% endfor %}
     </div>
@@ -46,26 +62,92 @@
           <div><dt>{{ f.k }}</dt><dd>{{ f.v }}</dd></div>
         {% endfor %}
       </dl>
-      <div style="margin-top: 14px; font-size: 12px; color: var(--ink-mute)">
-        Custom fields: add any key/value, e.g. "Radon test" or "Walk to light rail".
-      </div>
+      {% if house.best_thing or house.worst_thing %}
+        <div style="margin-top: 12px; font-size: 13px">
+          {% if house.best_thing %}<div><strong>Best:</strong> {{ house.best_thing }}</div>{% endif %}
+          {% if house.worst_thing %}<div><strong>Worst:</strong> {{ house.worst_thing }}</div>{% endif %}
+        </div>
+      {% endif %}
+
+      <details style="margin-top: 14px">
+        <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">Edit details & custom fields</summary>
+        <form method="post" action="/houses/{{ house.id }}/edit"
+              style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 12px">
+          {% macro field(name, label, value, type='text', span=1) -%}
+            <label style="font-size: 12px; color: var(--ink-mute); grid-column: span {{ span }}">{{ label }}
+              <input name="{{ name }}" type="{{ type }}" value="{{ value if value is not none else '' }}"
+                     {% if type == 'number' %}step="any"{% endif %} style="width: 100%; margin-top: 4px">
+            </label>
+          {%- endmacro %}
+          {{ field('title', 'Nickname', house.title, span=2) }}
+          {{ field('address', 'Address', house.address, span=2) }}
+          {{ field('listing_url', 'Listing URL', house.listing_url, 'url', span=2) }}
+          {{ field('price', 'List price ($)', (house.price_cents // 100) if house.price_cents else '', 'number') }}
+          {{ field('beds', 'Beds', '%g' | format(house.beds) if house.beds is not none else '', 'number') }}
+          {{ field('baths', 'Baths', '%g' | format(house.baths) if house.baths is not none else '', 'number') }}
+          {{ field('sqft', 'Finished sq ft', house.sqft, 'number') }}
+          {{ field('year_built', 'Year built', house.year_built, 'number') }}
+          {{ field('lot', 'Lot', house.lot) }}
+          {{ field('garage', 'Garage', house.garage) }}
+          {{ field('taxes', 'Taxes / yr ($)', (house.taxes_cents // 100) if house.taxes_cents else '', 'number') }}
+          {{ field('tour_date', 'Toured', house.tour_date) }}
+          {{ field('best_thing', 'Best thing', house.best_thing, span=2) }}
+          {{ field('worst_thing', 'Worst thing', house.worst_thing, span=2) }}
+
+          <div style="grid-column: 1 / -1; font-size: 12px; color: var(--ink-mute); margin-top: 4px">
+            Custom fields — clear the name to remove one.
+          </div>
+          {% for k, v in house.custom.items() %}
+            <input name="ck" value="{{ k }}" aria-label="Custom field name">
+            <input name="cv" value="{{ v }}" aria-label="Custom field value">
+          {% endfor %}
+          <input name="ck" placeholder="New field, e.g. Radon test" aria-label="New custom field name">
+          <input name="cv" placeholder="Value" aria-label="New custom field value">
+
+          <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 8px; margin-top: 6px">
+            <button type="submit" formaction="/houses/{{ house.id }}/delete" class="btn ghost"
+                    style="color: var(--warn-fg)"
+                    onclick="return confirm('Delete {{ house.title }}? Its notes and offers go with it; uploaded files stay in Documents.')">
+              Delete house
+            </button>
+            <button type="submit" class="btn">Save details</button>
+          </div>
+        </form>
+      </details>
     </section>
 
     <section aria-labelledby="notes" class="card">
       <h2 id="notes">Notes log</h2>
-      <label for="newnote" style="font-size: 12px; color: var(--ink-mute)">Add a note as {{ current_user }}</label>
-      <textarea id="newnote" rows="3" placeholder="What did you notice? Markdown works."
-                style="display: block; width: 100%; margin-top: 4px"></textarea>
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px">
-        <button type="button" class="btn ghost">Attach photo</button>
-        <button type="button" class="btn">Add note</button>
-      </div>
+      <form method="post" action="/houses/{{ house.id }}/notes/new" enctype="multipart/form-data">
+        <label for="newnote" style="font-size: 12px; color: var(--ink-mute)">Add a note as {{ current_user }}</label>
+        <textarea id="newnote" name="body" rows="3" placeholder="What did you notice? Markdown works."
+                  style="display: block; width: 100%; margin-top: 4px"></textarea>
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 8px">
+          <span id="np-count" style="font-size: 12px; color: var(--ink-mute)"></span>
+          <label for="note-photos" class="btn ghost" style="display: inline-flex; align-items: center; cursor: pointer">Attach photo</label>
+          <input id="note-photos" name="photos" type="file" accept="image/*" multiple style="display: none"
+                 onchange="document.getElementById('np-count').textContent = this.files.length ? this.files.length + ' photo(s) attached' : ''">
+          <button type="submit" class="btn">Add note</button>
+        </div>
+      </form>
       {% for n in notes %}
         <article class="note">
           {{ avatar(n['author']) }}
           <div style="min-width: 0">
-            <div class="meta"><strong>{{ n['author'] }}</strong> · {{ n['created_at'] }}</div>
-            <div class="body">{{ n['body_md'] }}</div>
+            <div class="meta"><strong>{{ n['author'] }}</strong> · {{ n['created_at'] | local_dt }}</div>
+            <div class="md">{{ n['body_md'] | md }}</div>
+            {% if note_photos.get(n['id']) %}
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px">
+                {% for p in note_photos[n['id']] %}
+                  <a href="/documents/file/{{ p['id'] }}" target="_blank" rel="noopener">
+                    {% if p['thumb_path'] %}
+                      <img src="/documents/thumb/{{ p['id'] }}" alt="{{ p['original_name'] }}"
+                           style="width: 72px; height: 72px; object-fit: cover; border-radius: 6px">
+                    {% else %}{{ p['original_name'] }}{% endif %}
+                  </a>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
         </article>
       {% endfor %}
@@ -78,12 +160,18 @@
       </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px">
         {% for p in photos %}
-          <div style="aspect-ratio: 4 / 3; background: #DDE1E6; border-radius: 6px;
-                      display: flex; align-items: flex-end; padding: 6px; font-size: 11px; color: #3D444D">
-            {{ p['original_name'] }}
-          </div>
+          <a href="/documents/file/{{ p['id'] }}" target="_blank" rel="noopener"
+             style="aspect-ratio: 4 / 3; background: #DDE1E6; border-radius: 6px; overflow: hidden;
+                    display: flex; align-items: flex-end; font-size: 11px; color: #3D444D; text-decoration: none">
+            {% if p['thumb_path'] %}
+              <img src="/documents/thumb/{{ p['id'] }}" alt="{{ p['original_name'] }}" loading="lazy"
+                   style="width: 100%; height: 100%; object-fit: cover">
+            {% else %}
+              <span style="padding: 6px">{{ p['original_name'] }}</span>
+            {% endif %}
+          </a>
         {% else %}
-          <div style="color: var(--ink-mute); font-size: 13px">No photos yet.</div>
+          <div style="color: var(--ink-mute); font-size: 13px">No photos yet — attach some to a note or use tour capture.</div>
         {% endfor %}
       </div>
     </section>
@@ -92,18 +180,18 @@
   <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
 
     <section aria-labelledby="offers" class="card">
-      <div style="display: flex; justify-content: space-between; align-items: baseline">
-        <h2 id="offers">Offers</h2>
-        <a href="#" style="font-size: 13px">+ New offer</a>
-      </div>
+      <h2 id="offers">Offers</h2>
       {% for row in offer_rows %}
         {% set o = row.offer %}
         <div style="padding: 12px 0; border-top: 1px solid var(--line-soft)">
-          <div style="display: flex; justify-content: space-between; align-items: center">
-            <span style="font-family: var(--mono); font-weight: 500; font-size: 16px">
-              {{ o['amount_cents'] | money }}
-            </span>
-            <span class="pill" style="background: var(--accent); color: #fff">{{ o['status'] }}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font-family: var(--mono); font-weight: 500; font-size: 16px">{{ o['amount_cents'] | money }}</span>
+            <form method="post" action="/houses/{{ house.id }}/offers/{{ o['id'] }}/status">
+              <select name="status" onchange="this.form.submit()" aria-label="Offer status"
+                      style="min-height: 30px; font-size: 12px; padding: 0 6px">
+                {% for s in offer_statuses %}<option {% if s == o['status'] %}selected{% endif %}>{{ s }}</option>{% endfor %}
+              </select>
+            </form>
           </div>
           <div style="color: var(--ink-mute); font-size: 13px">
             {% if o['sent_date'] %}Sent {{ o['sent_date'] }}{% endif %}
@@ -112,55 +200,96 @@
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px">
             {% for d in row.docs %}
-              <a href="/documents" style="font-size: 12px; padding: 3px 8px; border: 1px solid var(--input-border); border-radius: 4px; text-decoration: none; color: var(--ink)">
+              <a href="/documents/file/{{ d['id'] }}" target="_blank" rel="noopener"
+                 style="font-size: 12px; padding: 3px 8px; border: 1px solid var(--input-border); border-radius: 4px; text-decoration: none; color: var(--ink)">
                 {{ d['original_name'] }}
               </a>
             {% endfor %}
           </div>
         </div>
       {% else %}
-        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No offers yet.</div>
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 4px">No offers yet.</div>
       {% endfor %}
+      <details style="margin-top: 10px">
+        <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">+ New offer</summary>
+        <form method="post" action="/houses/{{ house.id }}/offers/new" enctype="multipart/form-data"
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
+          <label style="font-size: 12px; color: var(--ink-mute)">Amount ($)
+            <input name="amount" type="number" step="1000" min="0" required style="width: 100%; margin-top: 4px">
+          </label>
+          <label style="font-size: 12px; color: var(--ink-mute)">Status
+            <select name="status" style="width: 100%; margin-top: 4px">
+              {% for s in offer_statuses %}<option {% if s == 'Pending' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </label>
+          <label style="font-size: 12px; color: var(--ink-mute)">Sent
+            <input name="sent_date" type="date" style="width: 100%; margin-top: 4px">
+          </label>
+          <label style="font-size: 12px; color: var(--ink-mute)">Expires
+            <input name="expires_at" type="date" style="width: 100%; margin-top: 4px">
+          </label>
+          <label style="font-size: 12px; color: var(--ink-mute); grid-column: 1 / -1">Contingencies
+            <input name="contingencies" placeholder="inspection + financing" style="width: 100%; margin-top: 4px">
+          </label>
+          <label style="font-size: 12px; color: var(--ink-mute); grid-column: 1 / -1">Paperwork
+            <input name="files" type="file" multiple style="width: 100%; margin-top: 4px; border: 0; padding: 6px 0">
+          </label>
+          <button type="submit" class="btn" style="grid-column: 1 / -1; justify-self: end">Save offer</button>
+        </form>
+      </details>
     </section>
 
     <section aria-labelledby="hfiles" class="card">
-      <div style="display: flex; justify-content: space-between; align-items: baseline">
-        <h2 id="hfiles">Files</h2>
-        <a href="#" style="font-size: 13px">+ Attach</a>
-      </div>
+      <h2 id="hfiles">Files</h2>
       {% for f in files %}
         <div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
-          <a href="/documents" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f['original_name'] }}</a>
-          <span style="color: var(--ink-mute); flex-shrink: 0">{{ f['role'] or '' }}</span>
+          <a href="/documents/file/{{ f['id'] }}" target="_blank" rel="noopener"
+             style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f['original_name'] }}</a>
+          <span style="color: var(--ink-mute); flex-shrink: 0">{{ f['role'] | replace('_', ' ') }}</span>
         </div>
       {% else %}
-        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No files attached.</div>
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 4px">No files attached.</div>
       {% endfor %}
+      <details style="margin-top: 10px">
+        <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">+ Attach</summary>
+        <form method="post" action="/houses/{{ house.id }}/files" enctype="multipart/form-data"
+              style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px">
+          <input name="files" type="file" multiple required style="border: 0; padding: 6px 0">
+          <input name="tags" placeholder="Tags, e.g. Disclosure, Inspection">
+          <button type="submit" class="btn" style="align-self: flex-end">Upload</button>
+        </form>
+      </details>
     </section>
 
     <section aria-labelledby="ppl" class="card">
-      <h2 id="ppl">People</h2>
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="ppl">People</h2>
+        <a href="/contacts" style="font-size: 13px">Manage</a>
+      </div>
       {% for p in people %}
         <div style="padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
           <div style="font-weight: 500">{{ p['name'] }}</div>
           <div style="color: var(--ink-mute)">
-            {{ p['role'] or '' }}{% if p['phone'] %} · {{ p['phone'] }}{% endif %}{% if p['email'] %} · {{ p['email'] }}{% endif %}
+            {{ p['role'] or '' }}{% if p['phone'] %} · <a href="tel:{{ p['phone'] }}">{{ p['phone'] }}</a>{% endif %}{% if p['email'] %} · <a href="mailto:{{ p['email'] }}">{{ p['email'] }}</a>{% endif %}
           </div>
         </div>
       {% else %}
-        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No people linked.</div>
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 4px">No people linked.</div>
       {% endfor %}
     </section>
 
     <section aria-labelledby="hdates" class="card">
-      <h2 id="hdates">Key dates</h2>
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="hdates">Key dates</h2>
+        <a href="/timeline" style="font-size: 13px">Add on timeline</a>
+      </div>
       {% for d in dates %}
         <div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
           <span>{{ d['title'] }}</span>
-          <span style="font-family: var(--mono); color: var(--ink-mute)">{{ d['on_date'] }}</span>
+          <span style="font-family: var(--mono); color: var(--ink-mute)">{{ d['on_date'] | fmt_date }}</span>
         </div>
       {% else %}
-        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No dates yet.</div>
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 4px">No dates yet.</div>
       {% endfor %}
     </section>
   </aside>

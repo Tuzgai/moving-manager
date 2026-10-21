@@ -1,17 +1,26 @@
 <nav class="sidebar" aria-label="Main">
   <h1>Household Hub</h1>
+  <form method="get" action="/search" role="search" style="padding: 0 10px 12px">
+    <label for="sidebar-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search everything</label>
+    <input id="sidebar-q" name="q" type="search" placeholder="Search…"
+           style="width: 100%; min-height: 36px; background: var(--sidebar-input); color: var(--sidebar-ink);
+                  border: 1px solid var(--sidebar-input-border)">
+  </form>
   {% set active = nav_active | default('') %}
-  {% for item in nav %}
-    <a href="{{ item.href }}"
-       class="nav-link{% if item.label == active %} active{% endif %}">
-      <span>{{ item.label }}</span>
-      <span class="count">{{ item.count }}</span>
-    </a>
-  {% endfor %}
+  <div class="nav-links">
+    {% for item in nav %}
+      <a href="{{ item.href }}"
+         class="nav-link{% if item.label == active %} active{% endif %}"
+         {% if item.label == active %}aria-current="page"{% endif %}>
+        <span>{{ item.label }}</span>
+        <span class="count">{{ item.count }}</span>
+      </a>
+    {% endfor %}
+  </div>
 
   <div class="spacer"></div>
 
-  <form method="post" action="/set-user">
+  <form method="post" action="/set-user" class="who-form">
     <label for="who">Viewing as</label>
     <select id="who" name="who" onchange="this.form.submit()">
       {% for u in users %}

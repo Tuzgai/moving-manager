@@ -7,15 +7,21 @@ the winning column index server-side.
 """
 from __future__ import annotations
 
+import dataclasses
 import sqlite3
+from pathlib import PurePosixPath
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
+from slugify import slugify
 
 from app import scrape
-from app.deps import current_user, get_db
+from app.config import Config
+from app.deps import current_user, get_config, get_db
 from app.models import House
+from app.repo import activity as activity_repo
+from app.repo import files as files_repo
 from app.repo import items as items_repo
 from app.repo import notes as notes_repo
 from app.repo import offers as offers_repo
@@ -28,8 +34,37 @@ router = APIRouter()
 STATUS_ORDER = ["Interested", "Toured", "Considering", "Offer out", "Under contract", "Passed"]
 
 
+OFFER_STATUSES = ["Draft", "Pending", "Countered", "Accepted", "Declined", "Withdrawn"]
+
+
 def _templates(request: Request):
     return request.app.state.templates
+
+
+def _int(s):
+    s = (s or "").replace(",", "").strip()
+    return int(s) if s.lstrip("-").isdigit() else None
+
+
+def _float(s):
+    try:
+        return float(s) if s else None
+    except ValueError:
+        return None
+
+
+def _cents(s):
+    s = (s or "").replace("$", "").replace(",", "").strip()
+    if not s:
+        return None
+    try:
+        return int(round(float(s) * 100))
+    except ValueError:
+        return None
+
+
+def _house_folder(h: House) -> PurePosixPath:
+    return PurePosixPath("buy") / slugify(h.title)
 
 
 # ---- list page ----
@@ -60,8 +95,22 @@ def houses_list(
 
     cmp_rows = _compare_rows(picked) if picked else []
 
+    # Card image: the house's first uploaded photo, else the scraped listing image.
+    heroes: dict[int, str] = {}
+    for r in conn.execute(
+        "SELECT iif.item_id, MIN(f.id) AS fid FROM item_files iif JOIN files f ON f.id = iif.file_id"
+        " WHERE iif.role = 'photo' AND f.thumb_path IS NOT NULL GROUP BY iif.item_id"
+    ):
+        heroes[r["item_id"]] = f"/documents/thumb/{r['fid']}"
+    for h in houses:
+        if h.id not in heroes:
+            link = next((l for l in h.other_links if l.get("label") == "Hero image"), None)
+            if link and link.get("url", "").startswith("https://"):
+                heroes[h.id] = link["url"]
+
     ctx = page_ctx(request, conn, who, active="Houses")
     ctx.update({
+        "heroes": heroes,
         "houses": houses,
         "status": status,
         "filters": filters,
@@ -174,16 +223,6 @@ def new_house_save(
     status: Annotated[str, Form()] = "Interested",
     image_url: Annotated[str, Form()] = "",
 ):
-    def _int(s): return int(s) if s and s.lstrip("-").isdigit() else None
-    def _float(s):
-        try: return float(s) if s else None
-        except ValueError: return None
-    def _cents(s):
-        s = (s or "").replace("$", "").replace(",", "").strip()
-        if not s: return None
-        try: return int(round(float(s) * 100))
-        except ValueError: return None
-
     fields: dict = {}
     if url: fields["listing_url"] = url
     if address: fields["address"] = address
@@ -214,10 +253,16 @@ def house_detail(
 ):
     house = items_repo.get_house(conn, house_id)
     if not house:
-        from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/houses", status_code=302)
 
     notes = notes_repo.list_for(conn, house_id)
+    note_photos: dict[int, list] = {}
+    for r in conn.execute(
+        "SELECT nf.note_id, f.id, f.original_name, f.thumb_path FROM note_files nf"
+        " JOIN files f ON f.id = nf.file_id JOIN notes n ON n.id = nf.note_id"
+        " WHERE n.item_id = ? ORDER BY f.id", (house_id,),
+    ):
+        note_photos.setdefault(r["note_id"], []).append(r)
     offers = offers_repo.list_for_house(conn, house_id)
     offer_rows = []
     for o in offers:
@@ -241,6 +286,8 @@ def house_detail(
     ctx.update({
         "house": house,
         "notes": notes,
+        "note_photos": note_photos,
+        "offer_statuses": OFFER_STATUSES,
         "offer_rows": offer_rows,
         "dates": dates,
         "people": people,
@@ -252,13 +299,211 @@ def house_detail(
     return _templates(request).TemplateResponse(request, "house_detail.html", ctx)
 
 
+# ---- house page actions ----
+
+def _require_house(conn, house_id: int) -> House:
+    h = items_repo.get_house(conn, house_id)
+    if not h:
+        raise HTTPException(status_code=404)
+    return h
+
+
+def _back(house_id: int) -> RedirectResponse:
+    return RedirectResponse(url=f"/houses/{house_id}", status_code=303)
+
+
+@router.post("/houses/{house_id}/status")
+def set_status(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+    status: Annotated[str, Form()],
+):
+    h = _require_house(conn, house_id)
+    if status in STATUS_ORDER and status != h.status:
+        items_repo.update(conn, house_id, status=status)
+        activity_repo.log(conn, actor=who, verb="status",
+                          text=f"moved {h.title} to {status}", item_id=house_id)
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/rating")
+def set_rating(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+    rating: Annotated[str, Form()] = "",
+):
+    h = _require_house(conn, house_id)
+    ratings = dict(h.ratings)
+    n = _int(rating)
+    if n is not None and 1 <= n <= 5:
+        ratings[who] = n
+        activity_repo.log(conn, actor=who, verb="rated",
+                          text=f"rated {h.title} {n}/5", item_id=house_id)
+    else:
+        ratings.pop(who, None)
+    items_repo.update(conn, house_id, fields=dataclasses.replace(h, ratings=ratings).to_fields())
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/edit")
+async def edit_house(
+    request: Request,
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+):
+    h = _require_house(conn, house_id)
+    form = await request.form()
+    g = lambda k: (form.get(k) or "").strip()  # noqa: E731
+
+    # Custom fields arrive as parallel ck/cv lists; blank keys drop the row.
+    custom = {}
+    for k, v in zip(form.getlist("ck"), form.getlist("cv")):
+        if k.strip():
+            custom[k.strip()] = v.strip()
+
+    updated = dataclasses.replace(
+        h,
+        address=g("address"), listing_url=g("listing_url"),
+        price_cents=_cents(g("price")), beds=_float(g("beds")), baths=_float(g("baths")),
+        sqft=_int(g("sqft")), year_built=_int(g("year_built")), lot=g("lot"),
+        garage=g("garage"), taxes_cents=_cents(g("taxes")), tour_date=g("tour_date"),
+        best_thing=g("best_thing"), worst_thing=g("worst_thing"), custom=custom,
+    )
+    items_repo.update(conn, house_id, title=g("title") or h.title, fields=updated.to_fields())
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/notes/new")
+async def add_house_note(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    cfg: Annotated[Config, Depends(get_config)],
+    who: Annotated[str, Depends(current_user)],
+    body: Annotated[str, Form()] = "",
+    photos: Annotated[list[UploadFile], File()] = (),
+):
+    h = _require_house(conn, house_id)
+    uploads = [p for p in (photos or []) if p and p.filename]
+    body = body.strip()
+    if not body and not uploads:
+        return _back(house_id)
+    note_id = notes_repo.add(conn, item_id=house_id, author=who,
+                             body_md=body or f"Added {len(uploads)} photo(s).")
+    for p in uploads:
+        try:
+            fid = files_repo.save_upload(
+                conn, cfg.files_root, _house_folder(h) / p.filename, p,
+                uploaded_by=who, tags=["Photos"],
+            )
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{p.filename} is over 50 MB")
+        files_repo.link_to_item(conn, fid, house_id, role="photo")
+        conn.execute("INSERT OR IGNORE INTO note_files(note_id, file_id) VALUES (?, ?)",
+                     (note_id, fid))
+    activity_repo.log(conn, actor=who, verb="added-note",
+                      text=f"added a note to {h.title}", item_id=house_id)
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/files")
+async def attach_house_files(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    cfg: Annotated[Config, Depends(get_config)],
+    who: Annotated[str, Depends(current_user)],
+    files: Annotated[list[UploadFile], File()],
+    tags: Annotated[str, Form()] = "",
+):
+    h = _require_house(conn, house_id)
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    for f in files:
+        if not f or not f.filename:
+            continue
+        try:
+            fid = files_repo.save_upload(conn, cfg.files_root, _house_folder(h) / f.filename, f,
+                                         uploaded_by=who, tags=tag_list)
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{f.filename} is over 50 MB")
+        files_repo.link_to_item(conn, fid, house_id)
+        activity_repo.log(conn, actor=who, verb="uploaded-file",
+                          text=f"attached {f.filename} to {h.title}", item_id=house_id)
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/offers/new")
+async def add_offer(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    cfg: Annotated[Config, Depends(get_config)],
+    who: Annotated[str, Depends(current_user)],
+    amount: Annotated[str, Form()],
+    status: Annotated[str, Form()] = "Draft",
+    sent_date: Annotated[str, Form()] = "",
+    expires_at: Annotated[str, Form()] = "",
+    contingencies: Annotated[str, Form()] = "",
+    files: Annotated[list[UploadFile], File()] = (),
+):
+    h = _require_house(conn, house_id)
+    cents = _cents(amount) or 0
+    oid = offers_repo.add(
+        conn, house_id=house_id, amount_cents=cents,
+        sent_date=sent_date or None, expires_at=expires_at or None,
+        status=status if status in OFFER_STATUSES else "Draft",
+        contingencies=contingencies.strip(),
+    )
+    for f in files or []:
+        if not f or not f.filename:
+            continue
+        try:
+            fid = files_repo.save_upload(conn, cfg.files_root, _house_folder(h) / f.filename, f,
+                                         uploaded_by=who, tags=["Offers"])
+        except files_repo.UploadTooLarge:
+            raise HTTPException(status_code=413, detail=f"{f.filename} is over 50 MB")
+        files_repo.link_to_item(conn, fid, house_id, role="offer_doc")
+        offers_repo.attach_file(conn, oid, fid)
+    activity_repo.log(conn, actor=who, verb="offer",
+                      text=f"logged a ${cents // 100:,} offer on {h.title}", item_id=house_id)
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/offers/{offer_id}/status")
+def set_offer_status(
+    house_id: int,
+    offer_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    status: Annotated[str, Form()],
+):
+    if status in OFFER_STATUSES:
+        conn.execute("UPDATE offers SET status=? WHERE id=? AND house_id=?",
+                     (status, offer_id, house_id))
+    return _back(house_id)
+
+
+@router.post("/houses/{house_id}/delete")
+def delete_house(
+    house_id: int,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+):
+    """Removes the house, its notes and offers. Uploaded files stay on disk and
+    in Documents (unlinked) — deleting paperwork should be a separate decision."""
+    h = _require_house(conn, house_id)
+    conn.execute("DELETE FROM items WHERE id=?", (house_id,))
+    activity_repo.log(conn, actor=who, verb="deleted", text=f"deleted house {h.title}")
+    return RedirectResponse(url="/houses", status_code=303)
+
+
 def _facts_for(h: House) -> list[dict[str, str]]:
     def dc(cents): return f"${(cents // 100):,}" if cents else "—"
     def num(v, suffix=""): return f"{v}{suffix}" if v is not None else "—"
     def bb():
         if h.beds is None and h.baths is None:
             return "—"
-        return f"{h.beds:g} / {h.baths:g}"
+        b = f"{h.beds:g}" if h.beds is not None else "—"
+        ba = f"{h.baths:g}" if h.baths is not None else "—"
+        return f"{b} / {ba}"
     facts = [
         {"k": "List price", "v": dc(h.price_cents)},
         {"k": "Beds / baths", "v": bb()},

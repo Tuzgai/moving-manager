@@ -23,7 +23,12 @@
 <section aria-label="House cards" class="cards-grid">
   {% for h in houses %}
     <a href="/houses/{{ h.id }}" class="house-card">
-      <div class="photo">Listing photo</div>
+      {% if heroes.get(h.id) %}
+        <img class="photo" src="{{ heroes[h.id] }}" alt="" loading="lazy" referrerpolicy="no-referrer"
+             style="width: 100%; object-fit: cover">
+      {% else %}
+        <div class="photo">No photo yet</div>
+      {% endif %}
       <div class="body">
         <div class="title-row">
           <span class="nick">{{ h.title }}</span>

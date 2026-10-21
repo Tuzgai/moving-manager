@@ -5,7 +5,7 @@ import sqlite3
 
 def upcoming(conn: sqlite3.Connection, limit: int = 6) -> list[sqlite3.Row]:
     return conn.execute(
-        "SELECT * FROM key_dates WHERE on_date >= date('now')"
+        "SELECT * FROM key_dates WHERE on_date >= date('now', 'localtime')"
         " ORDER BY on_date ASC LIMIT ?", (limit,),
     ).fetchall()
 

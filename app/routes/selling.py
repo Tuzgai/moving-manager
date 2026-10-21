@@ -11,12 +11,14 @@ import sqlite3
 from collections import defaultdict
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from app.deps import current_user, get_db
+from app.config import Config
+from app.deps import current_user, get_config, get_db
 from app.models import Task
 from app.repo import activity as activity_repo
+from app.repo import files as files_repo
 from app.repo import items as items_repo
 from app.repo import notes as notes_repo
 from app.repo import quotes as quotes_repo
@@ -68,12 +70,15 @@ def selling(
     task: int | None = None,
     group_by: str = "area",
     show: str = "everyone",
+    hide_done: int = 1,
 ):
     tasks = items_repo.list_tasks(conn)
 
     # "Mine" filter: tasks assigned to current user or Both
     if show == "mine":
         tasks = [t for t in tasks if t.assignee in (who, "Both")]
+    if hide_done:
+        tasks = [t for t in tasks if t.status not in ("Done", "Dropped")]
 
     groups = _group(tasks, group_by)
 
@@ -109,6 +114,7 @@ def selling(
         "groups": groups,
         "group_by": group_by,
         "show": show,
+        "hide_done": hide_done,
         "sel": sel,
         "selected_id": task,
         "prio_dot": PRIO_DOT,
@@ -202,17 +208,43 @@ def add_note(
 
 
 @router.post("/selling/{task_id}/quotes/new")
-def add_quote(
+async def add_quote(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    cfg: Annotated[Config, Depends(get_config)],
     who: Annotated[str, Depends(current_user)],
     vendor: Annotated[str, Form()],
     amount: Annotated[str, Form()],
     received_date: Annotated[str, Form()] = "",
     expires_at: Annotated[str, Form()] = "",
     note: Annotated[str, Form()] = "",
+    document: Annotated[UploadFile | None, File()] = None,
 ):
     cents = _dollars_to_cents(amount)
+    file_id: int | None = None
+
+    # Save the attached document, if any. Lives under sell/quotes/<slug>.<ext>
+    if document is not None and document.filename:
+        it = items_repo.get(conn, task_id)
+        task_slug = (it.title if it else f"task-{task_id}")
+        rel = files_repo.quote_path(task_slug, vendor, document.filename)
+        rel = files_repo.ensure_unique(cfg.files_root, rel)
+        size = files_repo.write_file(cfg.files_root, rel, document.file)
+        file_id = files_repo.insert(
+            conn,
+            original_name=document.filename,
+            stored_path=str(rel),
+            size_bytes=size,
+            mime_type=document.content_type or files_repo.guess_mime(document.filename),
+            tags='["Quotes"]',
+            uploaded_by=who,
+        )
+        # Also expose it on the task so the Documents page can show "linked to <task>"
+        conn.execute(
+            "INSERT OR IGNORE INTO item_files(item_id, file_id, role) VALUES (?, ?, 'quote_doc')",
+            (task_id, file_id),
+        )
+
     quotes_repo.add(
         conn, task_id=task_id,
         vendor=vendor.strip() or "Vendor",
@@ -220,6 +252,7 @@ def add_quote(
         received_date=received_date or None,
         expires_at=expires_at or None,
         note=note.strip(),
+        file_id=file_id,
     )
     it = items_repo.get(conn, task_id)
     if it:

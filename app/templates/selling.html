@@ -70,6 +70,11 @@
         <option value="everyone" {% if show == 'everyone' %}selected{% endif %}>Everyone</option>
         <option value="mine" {% if show == 'mine' %}selected{% endif %}>Mine</option>
       </select>
+      <label style="font-size: 12px; color: var(--ink-mute); margin-left: 6px; display: inline-flex; align-items: center; gap: 4px">
+        <input type="checkbox" name="hide_done" value="1" {% if hide_done %}checked{% endif %}
+               onchange="this.form.submit()" style="accent-color: var(--accent)">
+        Hide done
+      </label>
     </form>
 
     {% for group_label, tasks in groups %}
@@ -209,6 +214,7 @@
         <details style="margin-top: 10px">
           <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">+ Add quote</summary>
           <form method="post" action="/selling/{{ t.id }}/quotes/new"
+                enctype="multipart/form-data"
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
             <label style="font-size: 12px; color: var(--ink-mute)">Vendor
               <input name="vendor" required style="width: 100%; margin-top: 4px">
@@ -224,6 +230,9 @@
             </label>
             <label style="font-size: 12px; color: var(--ink-mute); grid-column: 1 / -1">Note
               <input name="note" style="width: 100%; margin-top: 4px">
+            </label>
+            <label style="font-size: 12px; color: var(--ink-mute); grid-column: 1 / -1">Document (PDF, image, etc.)
+              <input name="document" type="file" style="width: 100%; margin-top: 4px; min-height: unset; padding: 6px 0; border: 0">
             </label>
             <button type="submit" class="btn" style="grid-column: 1 / -1; justify-self: end; min-height: 36px">Add quote</button>
           </form>

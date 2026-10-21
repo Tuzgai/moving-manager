@@ -22,7 +22,7 @@
   <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
     <form method="post" action="/houses/{{ house.id }}/status" style="display: flex; flex-direction: column; gap: 4px">
       <label for="status" style="font-size: 12px; color: var(--ink-mute)">Status</label>
-      <select id="status" name="status" onchange="this.form.submit()">
+      <select id="status" name="status" onchange="this.form.requestSubmit()">
         {% for s in statuses %}<option {% if s == house.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
       </select>
     </form>
@@ -32,7 +32,7 @@
           <div style="font-size: 11px; color: var(--ink-mute)">{{ u }}</div>
           {% if u == current_user %}
             <form method="post" action="/houses/{{ house.id }}/rating">
-              <select name="rating" onchange="this.form.submit()" aria-label="Your rating"
+              <select name="rating" onchange="this.form.requestSubmit()" aria-label="Your rating"
                       style="min-height: 28px; padding: 0 4px; font-family: var(--mono); border: 0">
                 <option value="">– / 5</option>
                 {% for n in range(1, 6) %}
@@ -187,7 +187,7 @@
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
             <span style="font-family: var(--mono); font-weight: 500; font-size: 16px">{{ o['amount_cents'] | money }}</span>
             <form method="post" action="/houses/{{ house.id }}/offers/{{ o['id'] }}/status">
-              <select name="status" onchange="this.form.submit()" aria-label="Offer status"
+              <select name="status" onchange="this.form.requestSubmit()" aria-label="Offer status"
                       style="min-height: 30px; font-size: 12px; padding: 0 6px">
                 {% for s in offer_statuses %}<option {% if s == o['status'] %}selected{% endif %}>{{ s }}</option>{% endfor %}
               </select>
@@ -215,7 +215,7 @@
         <form method="post" action="/houses/{{ house.id }}/offers/new" enctype="multipart/form-data"
               style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
           <label style="font-size: 12px; color: var(--ink-mute)">Amount ($)
-            <input name="amount" type="number" step="1000" min="0" required style="width: 100%; margin-top: 4px">
+            <input name="amount" type="number" step="1" min="0" required style="width: 100%; margin-top: 4px">
           </label>
           <label style="font-size: 12px; color: var(--ink-mute)">Status
             <select name="status" style="width: 100%; margin-top: 4px">

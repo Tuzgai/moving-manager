@@ -48,6 +48,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="Household Hub")
 
+from app import errors  # noqa: E402
+
+errors.install(app)
+
 templates = Jinja2Templates(directory=str(PROJECT_ROOT / "app" / "templates"))
 for name, fn in {
     "money": money, "money_short": money_short, "fmt_date": fmt_date,

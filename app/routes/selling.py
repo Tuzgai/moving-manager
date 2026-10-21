@@ -144,9 +144,13 @@ def _spent_so_far(conn: sqlite3.Connection) -> int:
 
 def _dollars_to_cents(s: str) -> int:
     s = (s or "").strip().replace("$", "").replace(",", "")
-    if not s:
-        return 0
-    return int(round(float(s) * 100))
+    try:
+        cents = int(round(float(s) * 100))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="The amount needs to be a number, like 2900 or 2,900.50.")
+    if cents < 0:
+        raise HTTPException(status_code=400, detail="The amount can't be negative.")
+    return cents
 
 
 @router.post("/selling/tasks/new")

@@ -195,6 +195,22 @@ textarea { padding: 10px 12px; resize: vertical; }
 /* Mobile */
 .nav-links { display: flex; flex-direction: column; gap: 4px; }
 
+/* Error toast: fixed so it's visible wherever the page is scrolled to. */
+#toast-host {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50;
+  display: flex; flex-direction: column; gap: 8px; width: min(520px, calc(100% - 32px));
+}
+.toast {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
+  background: var(--sidebar); color: #fff; border-left: 4px solid var(--warn-fg);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.toast span { flex: 1; }
+.toast button {
+  background: none; border: 0; color: var(--sidebar-ink-mute); font-size: 18px;
+  line-height: 1; cursor: pointer; padding: 0 2px;
+}
+
 @media (max-width: 760px) {
   .main { padding: 20px 16px 40px; }
   /* Sidebar becomes a compact top bar: title + user picker, search, then a

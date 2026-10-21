@@ -58,21 +58,21 @@
           style="display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; align-items: center">
       {% if selected_id %}<input type="hidden" name="task" value="{{ selected_id }}">{% endif %}
       <label style="font-size: 12px; color: var(--ink-mute)">Group by</label>
-      <select name="group_by" onchange="this.form.submit()"
+      <select name="group_by" onchange="this.form.requestSubmit()"
               style="min-height: 36px; padding: 0 8px; font-size: 13px">
         {% for g in ['area', 'status', 'assignee'] %}
           <option value="{{ g }}" {% if g == group_by %}selected{% endif %}>{{ g | capitalize }}</option>
         {% endfor %}
       </select>
       <label style="font-size: 12px; color: var(--ink-mute); margin-left: 6px">Show</label>
-      <select name="show" onchange="this.form.submit()"
+      <select name="show" onchange="this.form.requestSubmit()"
               style="min-height: 36px; padding: 0 8px; font-size: 13px">
         <option value="everyone" {% if show == 'everyone' %}selected{% endif %}>Everyone</option>
         <option value="mine" {% if show == 'mine' %}selected{% endif %}>Mine</option>
       </select>
       <label style="font-size: 12px; color: var(--ink-mute); margin-left: 6px; display: inline-flex; align-items: center; gap: 4px">
         <input type="checkbox" name="hide_done" value="1" {% if hide_done %}checked{% endif %}
-               onchange="this.form.submit()" style="accent-color: var(--accent)">
+               onchange="this.form.requestSubmit()" style="accent-color: var(--accent)">
         Hide done
       </label>
     </form>
@@ -178,7 +178,7 @@
                   <tr style="background: {{ 'var(--accent-tint)' if q['chosen'] else 'transparent' }}">
                     <td>
                       <input type="radio" name="quote_id" value="{{ q['id'] }}"
-                             onchange="this.form.submit()"
+                             onchange="this.form.requestSubmit()"
                              aria-label="Choose {{ q['vendor'] }}"
                              {% if q['chosen'] %}checked{% endif %}
                              style="width: 18px; height: 18px; accent-color: var(--accent)">
@@ -200,7 +200,7 @@
                   <td colspan="6" style="padding-top: 10px">
                     <label style="font-size: 12px; color: var(--ink-mute); display: inline-flex; align-items: center; gap: 6px">
                       <input type="radio" name="quote_id" value="none"
-                             onchange="this.form.submit()"
+                             onchange="this.form.requestSubmit()"
                              {% if not sel.quotes | selectattr('chosen') | list %}checked{% endif %}>
                       No choice yet
                     </label>

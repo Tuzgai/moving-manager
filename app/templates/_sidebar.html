@@ -22,7 +22,7 @@
 
   <form method="post" action="/set-user" class="who-form">
     <label for="who">Viewing as</label>
-    <select id="who" name="who" onchange="this.form.submit()">
+    <select id="who" name="who" onchange="this.form.requestSubmit()">
       {% for u in users %}
         <option value="{{ u }}" {% if u == current_user %}selected{% endif %}>{{ u }}</option>
       {% endfor %}

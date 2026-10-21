@@ -114,10 +114,13 @@ async def upload(
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
     cfg: Annotated[Config, Depends(get_config)],
     who: Annotated[str, Depends(current_user)],
-    files: Annotated[list[UploadFile], File()],
+    files: Annotated[list[UploadFile], File()] = (),
     tags: Annotated[str, Form()] = "",
     link_item_id: Annotated[str, Form()] = "",
 ):
+    files = [f for f in files or [] if f and f.filename]
+    if not files:
+        raise HTTPException(status_code=400, detail="Choose or drop at least one file before uploading.")
     parsed_tags = _parse_tags(tags)
     link_id: int | None = int(link_item_id) if link_item_id.isdigit() else None
 

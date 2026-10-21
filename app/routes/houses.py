@@ -413,14 +413,15 @@ async def attach_house_files(
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
     cfg: Annotated[Config, Depends(get_config)],
     who: Annotated[str, Depends(current_user)],
-    files: Annotated[list[UploadFile], File()],
+    files: Annotated[list[UploadFile], File()] = (),
     tags: Annotated[str, Form()] = "",
 ):
     h = _require_house(conn, house_id)
     tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+    files = [f for f in files or [] if f and f.filename]
+    if not files:
+        raise HTTPException(status_code=400, detail="Choose at least one file to attach.")
     for f in files:
-        if not f or not f.filename:
-            continue
         try:
             fid = files_repo.save_upload(conn, cfg.files_root, _house_folder(h) / f.filename, f,
                                          uploaded_by=who, tags=tag_list)
@@ -446,7 +447,9 @@ async def add_offer(
     files: Annotated[list[UploadFile], File()] = (),
 ):
     h = _require_house(conn, house_id)
-    cents = _cents(amount) or 0
+    cents = _cents(amount)
+    if cents is None or cents <= 0:
+        raise HTTPException(status_code=400, detail="The offer amount needs to be a number, like 368000.")
     oid = offers_repo.add(
         conn, house_id=house_id, amount_cents=cents,
         sent_date=sent_date or None, expires_at=expires_at or None,

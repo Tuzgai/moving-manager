@@ -60,7 +60,7 @@
       </select>
     </label>
     <label style="font-size: 12px; color: var(--ink-mute)">List price ($)
-      <input name="price" type="number" step="1000" min="0"
+      <input name="price" type="number" step="1" min="0"
              value="{% if scraped and scraped.price_cents %}{{ scraped.price_cents // 100 }}{% endif %}"
              style="width: 100%; margin-top: 4px">
     </label>

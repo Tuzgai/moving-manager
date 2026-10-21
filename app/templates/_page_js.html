@@ -1,0 +1,51 @@
+{# Included at the end of <body> on every page. #}
+{% set flash = request.query_params.get('error') %}
+<div id="toast-host" aria-live="assertive">
+  {% if flash %}<div class="toast" role="alert"><span>{{ flash }}</span><button type="button" aria-label="Dismiss">×</button></div>{% endif %}
+</div>
+<script>
+(function () {
+  // Forms post, redirect, and reload the page, which would land at the top.
+  // Remember the scroll position on submit and restore it when the same page
+  // comes back within a few seconds.
+  var KEY = 'hh-scroll';
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+    sessionStorage.removeItem(KEY);
+    if (saved && saved.path === location.pathname && Date.now() - saved.t < 15000) {
+      window.scrollTo(0, saved.y);
+    }
+  } catch (e) {}
+  document.addEventListener('submit', function (e) {
+    if ((e.target.getAttribute('method') || 'get').toLowerCase() !== 'post') return;
+    try {
+      sessionStorage.setItem(KEY, JSON.stringify({ path: location.pathname, y: window.scrollY, t: Date.now() }));
+    } catch (err) {}
+  }, true);
+
+  var host = document.getElementById('toast-host');
+  function wire(toast) {
+    toast.querySelector('button').addEventListener('click', function () { toast.remove(); });
+    setTimeout(function () { toast.remove(); }, 9000);
+  }
+  window.showToast = function (msg) {
+    var t = document.createElement('div');
+    t.className = 'toast'; t.setAttribute('role', 'alert');
+    var s = document.createElement('span'); s.textContent = msg;
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Dismiss'); b.textContent = '×';
+    t.appendChild(s); t.appendChild(b); host.appendChild(t); wire(t);
+  };
+  host.querySelectorAll('.toast').forEach(wire);
+
+  // Drop ?error= from the address bar so a reload doesn't show it again.
+  var url = new URL(location.href);
+  if (url.searchParams.has('error')) {
+    url.searchParams.delete('error');
+    history.replaceState(null, '', url);
+  }
+
+  document.addEventListener('htmx:responseError', function (e) {
+    window.showToast((e.detail.xhr && e.detail.xhr.responseText) || 'Something went wrong.');
+  });
+})();
+</script>

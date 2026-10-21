@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Household Hub — {{ status }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css?v={{ css_v }}">
+</head>
+<body>
+<main style="max-width: 520px; margin: 12vh auto 0; padding: 0 16px">
+  <div class="card">
+    <div style="font-family: var(--mono); color: var(--ink-mute); font-size: 13px">Error {{ status }}</div>
+    <h1 style="margin: 4px 0 10px; font-size: 22px; font-weight: 600">Something's not right</h1>
+    <p style="margin: 0 0 16px">{{ message }}</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button type="button" class="btn ghost" onclick="history.back()">Go back</button>
+      <a href="/" class="btn" style="display: inline-flex; align-items: center; text-decoration: none">Dashboard</a>
+    </div>
+  </div>
+</main>
+</body>
+</html>

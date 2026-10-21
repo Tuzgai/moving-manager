@@ -32,8 +32,10 @@
     <div style="font-size: 12px; color: var(--ink-mute); margin-bottom: 10px">
       {% if scraped.fetched %}
         Fetched · pulled details from <strong>{{ scraped.source }}</strong>.
+      {% elif scraped.source == 'url' %}
+        The site blocked the fetch, so only the address (read from the URL) is filled in — add the rest by hand.
       {% else %}
-        Couldn't reach that URL (403, timeout, or network error) — enter the details by hand.
+        Couldn't reach that URL (blocked, timeout, or network error) — enter the details by hand.
       {% endif %}
     </div>
   {% endif %}

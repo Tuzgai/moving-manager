@@ -80,6 +80,24 @@ def test_scrape_returns_empty_on_fetch_failure(monkeypatch):
     assert r.source == "none"
 
 
+def test_blocked_redfin_falls_back_to_url_address(monkeypatch):
+    monkeypatch.setattr(scrape, "fetch", lambda url: None)
+    r = scrape.scrape("https://www.redfin.com/MN/Blaine/8828-Van-Buren-St-NE-55434/home/50985826")
+    assert not r.fetched
+    assert r.source == "url"
+    assert r.address == "8828 Van Buren St NE, Blaine, MN 55434"
+    assert r.title == "8828 Van Buren St NE"
+
+
+def test_address_from_zillow_url():
+    url = "https://www.zillow.com/homedetails/8810-Van-Buren-St-NE-Blaine-MN-55434/1548734_zpid/"
+    assert scrape.address_from_url(url) == "8810 Van Buren St NE Blaine, MN 55434"
+
+
+def test_address_from_unknown_url_is_empty():
+    assert scrape.address_from_url("https://example.com/listing/42") == ""
+
+
 def test_nickname_from_title_strips_realtor_tails():
     assert scrape.nickname_from_title("Blue cape — Zillow") == "Blue cape"
     assert scrape.nickname_from_title("Something Lovely | Redfin") == "Something Lovely"

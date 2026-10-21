@@ -17,6 +17,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
@@ -46,12 +47,14 @@ def fetch(url: str) -> str | None:
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"})
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-            if resp.status >= 400:
+            # Anything but 200 (e.g. Redfin's 202 bot challenge) means no listing content.
+            if resp.status != 200:
                 return None
             raw = resp.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES:
                 raw = raw[:MAX_BYTES]
-            return raw.decode(resp.headers.get_content_charset() or "utf-8", errors="replace")
+            body = raw.decode(resp.headers.get_content_charset() or "utf-8", errors="replace")
+            return body or None
     except Exception:
         return None
 
@@ -194,11 +197,41 @@ def _pull_from_regex(text: str, out: ScrapedListing) -> bool:
     return used
 
 
+US_STATES = {
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL",
+    "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE",
+    "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD",
+    "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+}
+
+
+def address_from_url(url: str) -> str:
+    """Pull the street address out of a Redfin or Zillow listing URL slug.
+    Redfin: /MN/Blaine/8828-Van-Buren-St-NE-55434/home/50985826
+    Zillow: /homedetails/8810-Van-Buren-St-NE-Blaine-MN-55434/1548734_zpid/"""
+    path = urllib.parse.urlparse(url).path
+    m = re.search(r"/([A-Z]{2})/([^/]+)/(\d[^/]*?)-(\d{5})/home/", path)
+    if m and m.group(1) in US_STATES:
+        state, city, street, zipcode = m.groups()
+        return f"{street.replace('-', ' ')}, {city.replace('-', ' ')}, {state} {zipcode}"
+    m = re.search(r"/homedetails/(\d[^/]*?)-([A-Z]{2})-(\d{5})/", path)
+    if m and m.group(2) in US_STATES:
+        # Street and city run together in Zillow slugs; keep them as one chunk.
+        return f"{m.group(1).replace('-', ' ')}, {m.group(2)} {m.group(3)}"
+    return ""
+
+
 def scrape(url: str, html_text: str | None = None) -> ScrapedListing:
     """Scrape a listing. Pass html_text to skip the HTTP fetch (used by tests)."""
     out = ScrapedListing(url=url)
     body = html_text if html_text is not None else fetch(url)
     if body is None:
+        # Blocked or unreachable: the URL slug may still give us the address.
+        addr = address_from_url(url)
+        if addr:
+            out.address = addr
+            out.title = addr.split(",")[0]
+            out.source = "url"
         return out
     out.fetched = True
 

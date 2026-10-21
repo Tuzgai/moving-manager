@@ -52,7 +52,15 @@ Logs: `journalctl --user -u household-hub -f`.
 
 ## Backups
 
-A nightly job runs `sqlite3 .backup` and writes a consistent snapshot to the configured `backup_dir`, keeping the last 14. Scheduled inside the app process at startup; no cron needed.
+A nightly job runs SQLite's online `.backup` and writes a consistent snapshot to the configured `backup_dir`, keeping the last 14. Scheduled inside the app process at startup (fires around 03:17 each day); no cron needed.
+
+To take a snapshot right now:
+
+```bash
+curl -X POST http://127.0.0.1:8765/admin/backup
+```
+
+Snapshots are plain `.sqlite` files — open one with any sqlite tool, or copy it over the live DB to restore.
 
 ## Tests
 

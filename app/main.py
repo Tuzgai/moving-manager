@@ -58,13 +58,19 @@ app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "app" / "static"))
 
 
 # --- routers ---
-from app.routes import capture, dashboard, documents, houses, selling  # noqa: E402
+from app.routes import (  # noqa: E402
+    admin, capture, contacts, dashboard, documents, houses, search, selling, timeline,
+)
 
 app.include_router(dashboard.router)
 app.include_router(houses.router)
 app.include_router(selling.router)
 app.include_router(documents.router)
 app.include_router(capture.router)
+app.include_router(contacts.router)
+app.include_router(timeline.router)
+app.include_router(search.router)
+app.include_router(admin.router)
 
 
 @app.post("/set-user")

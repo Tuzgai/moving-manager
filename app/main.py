@@ -58,9 +58,10 @@ app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "app" / "static"))
 
 
 # --- routers ---
-from app.routes import houses  # noqa: E402
+from app.routes import houses, selling  # noqa: E402
 
 app.include_router(houses.router)
+app.include_router(selling.router)
 
 
 @app.get("/")

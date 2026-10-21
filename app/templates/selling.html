@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Household Hub — Selling{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Selling</h1>
+    <div class="sub">{{ open_count }} open · {{ done_count }} done</div>
+  </div>
+  <div style="display: flex; gap: 20px; padding: 10px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px">
+    <div>
+      <div style="font-size: 12px; color: var(--ink-mute)">Chosen quotes</div>
+      <div style="font-family: var(--mono); font-weight: 500; font-size: 18px">{{ total_cents | money }}</div>
+    </div>
+    <div>
+      <div style="font-size: 12px; color: var(--ink-mute)">Spent so far</div>
+      <div style="font-family: var(--mono); font-weight: 500; font-size: 18px">{{ spent_cents | money }}</div>
+    </div>
+  </div>
+  <details style="position: relative">
+    <summary class="btn" style="list-style: none; display: inline-flex; align-items: center">+ New task</summary>
+    <form method="post" action="/selling/tasks/new"
+          style="position: absolute; right: 0; top: 48px; z-index: 10; background: #fff;
+                 border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+                 width: 320px; display: flex; flex-direction: column; gap: 8px;
+                 box-shadow: 0 8px 24px rgba(0,0,0,0.08)">
+      <label style="font-size: 12px; color: var(--ink-mute)">Title
+        <input name="title" required style="width: 100%; margin-top: 4px">
+      </label>
+      <label style="font-size: 12px; color: var(--ink-mute)">Area
+        <input name="area" placeholder="e.g. Living room" style="width: 100%; margin-top: 4px">
+      </label>
+      <div style="display: flex; gap: 8px">
+        <label style="font-size: 12px; color: var(--ink-mute); flex: 1">Priority
+          <select name="priority" style="width: 100%; margin-top: 4px">
+            {% for p in priorities %}<option {% if p == 'Med' %}selected{% endif %}>{{ p }}</option>{% endfor %}
+          </select>
+        </label>
+        <label style="font-size: 12px; color: var(--ink-mute); flex: 1">Assignee
+          <select name="assignee" style="width: 100%; margin-top: 4px">
+            {% for a in assignees %}<option {% if a == 'Both' %}selected{% endif %}>{{ a }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <label style="font-size: 12px; color: var(--ink-mute)">Due date
+        <input name="due_date" type="date" style="width: 100%; margin-top: 4px">
+      </label>
+      <button type="submit" class="btn">Create</button>
+    </form>
+  </details>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+  <section aria-label="Task list" style="flex: 1 1 320px; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 0">
+    <form method="get" action="/selling"
+          style="display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; align-items: center">
+      {% if selected_id %}<input type="hidden" name="task" value="{{ selected_id }}">{% endif %}
+      <label style="font-size: 12px; color: var(--ink-mute)">Group by</label>
+      <select name="group_by" onchange="this.form.submit()"
+              style="min-height: 36px; padding: 0 8px; font-size: 13px">
+        {% for g in ['area', 'status', 'assignee'] %}
+          <option value="{{ g }}" {% if g == group_by %}selected{% endif %}>{{ g | capitalize }}</option>
+        {% endfor %}
+      </select>
+      <label style="font-size: 12px; color: var(--ink-mute); margin-left: 6px">Show</label>
+      <select name="show" onchange="this.form.submit()"
+              style="min-height: 36px; padding: 0 8px; font-size: 13px">
+        <option value="everyone" {% if show == 'everyone' %}selected{% endif %}>Everyone</option>
+        <option value="mine" {% if show == 'mine' %}selected{% endif %}>Mine</option>
+      </select>
+    </form>
+
+    {% for group_label, tasks in groups %}
+      <div>
+        <div style="padding: 10px 14px 4px; font-size: 12px; color: var(--ink-mute);
+                    text-transform: uppercase; letter-spacing: 0.05em">{{ group_label }}</div>
+        {% for t in tasks %}
+          {% set active = t.id == selected_id %}
+          <a href="/selling?task={{ t.id }}&group_by={{ group_by }}&show={{ show }}"
+             aria-current="{{ 'true' if active else 'false' }}"
+             style="display: flex; text-decoration: none; color: var(--ink); gap: 10px;
+                    align-items: center; min-height: 48px; padding: 6px 14px;
+                    background: {{ 'var(--accent-tint)' if active else 'transparent' }}">
+            <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%;
+                       flex-shrink: 0; background: {{ prio_dot.get(t.priority, '#A9B0B9') }}"></span>
+            <span style="flex-grow: 1; min-width: 0">
+              <span style="display: block; font-weight: 500">{{ t.title }}</span>
+              <span style="display: block; font-size: 12px; color: var(--ink-mute)">
+                {{ t.status }} · {{ t.assignee or '—' }}{% if t.due_date %} · due {{ t.due_date }}{% endif %}
+              </span>
+            </span>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute)">
+              {{ quote_counts.get(t.id, '') or '' }}
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="padding: 14px; color: var(--ink-mute); font-size: 13px">No tasks match this filter.</div>
+    {% endfor %}
+    <div style="padding: 12px 14px 0; font-size: 12px; color: var(--ink-mute)">
+      Dot: red = high · amber = med · grey = low. Right number = quotes collected.
+    </div>
+  </section>
+
+  <section aria-label="Task detail" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+    {% if sel %}
+      {% set t = sel.task %}
+
+      <form method="post" action="/selling/{{ t.id }}/update" class="card">
+        <input type="hidden" name="title" value="{{ t.title }}">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 600">{{ t.title }}</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 14px">
+          <label style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: var(--ink-mute)">Status</span>
+            <select name="status">
+              {% for s in statuses %}<option {% if s == t.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: var(--ink-mute)">Priority</span>
+            <select name="priority">
+              {% for p in priorities %}<option {% if p == t.priority %}selected{% endif %}>{{ p }}</option>{% endfor %}
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: var(--ink-mute)">Area</span>
+            <input name="area" value="{{ t.area }}">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: var(--ink-mute)">Assignee</span>
+            <select name="assignee">
+              {% for a in assignees %}<option {% if a == t.assignee %}selected{% endif %}>{{ a }}</option>{% endfor %}
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: var(--ink-mute)">Due</span>
+            <input name="due_date" type="date" value="{{ t.due_date }}">
+          </label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+          <button type="submit" class="btn ghost" style="min-height: 36px">Save</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <h3>Quotes</h3>
+          <span style="font-size: 13px; color: var(--ink-mute)">{{ sel.quote_count }} on file</span>
+        </div>
+        {% if sel.quotes %}
+        <form method="post" action="/selling/{{ t.id }}/quotes/choose">
+          <div style="overflow-x: auto">
+            <table class="cmp" style="min-width: 560px">
+              <thead>
+                <tr style="color: var(--ink-mute)">
+                  <th scope="col" style="font-weight: 500">Chosen</th>
+                  <th scope="col" style="font-weight: 500">Vendor</th>
+                  <th scope="col" style="font-weight: 500">Amount</th>
+                  <th scope="col" style="font-weight: 500">Received</th>
+                  <th scope="col" style="font-weight: 500">Expires</th>
+                  <th scope="col" style="font-weight: 500">File</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for q in sel.quotes %}
+                  <tr style="background: {{ 'var(--accent-tint)' if q['chosen'] else 'transparent' }}">
+                    <td>
+                      <input type="radio" name="quote_id" value="{{ q['id'] }}"
+                             onchange="this.form.submit()"
+                             aria-label="Choose {{ q['vendor'] }}"
+                             {% if q['chosen'] %}checked{% endif %}
+                             style="width: 18px; height: 18px; accent-color: var(--accent)">
+                    </td>
+                    <td>
+                      <div style="font-weight: 500">{{ q['vendor'] }}</div>
+                      {% if q['note'] %}<div style="color: var(--ink-mute); font-size: 12px">{{ q['note'] }}</div>{% endif %}
+                    </td>
+                    <td class="mono" style="font-weight: 500">{{ q['amount_cents'] | money }}</td>
+                    <td class="mono">{{ q['received_date'] or '—' }}</td>
+                    <td class="mono">{{ q['expires_at'] or '—' }}</td>
+                    <td>
+                      {% if q['file_name'] %}<a href="/documents">{{ q['file_name'] }}</a>
+                      {% else %}<span style="color: var(--ink-mute)">—</span>{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+                <tr>
+                  <td colspan="6" style="padding-top: 10px">
+                    <label style="font-size: 12px; color: var(--ink-mute); display: inline-flex; align-items: center; gap: 6px">
+                      <input type="radio" name="quote_id" value="none"
+                             onchange="this.form.submit()"
+                             {% if not sel.quotes | selectattr('chosen') | list %}checked{% endif %}>
+                      No choice yet
+                    </label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <noscript><button type="submit" class="btn ghost" style="margin-top: 8px">Set chosen</button></noscript>
+        </form>
+        {% else %}
+          <div style="color: var(--ink-mute); font-size: 13px; padding: 8px 0">No quotes yet.</div>
+        {% endif %}
+
+        <details style="margin-top: 10px">
+          <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">+ Add quote</summary>
+          <form method="post" action="/selling/{{ t.id }}/quotes/new"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
+            <label style="font-size: 12px; color: var(--ink-mute)">Vendor
+              <input name="vendor" required style="width: 100%; margin-top: 4px">
+            </label>
+            <label style="font-size: 12px; color: var(--ink-mute)">Amount ($)
+              <input name="amount" required type="number" step="0.01" min="0" style="width: 100%; margin-top: 4px">
+            </label>
+            <label style="font-size: 12px; color: var(--ink-mute)">Received
+              <input name="received_date" type="date" style="width: 100%; margin-top: 4px">
+            </label>
+            <label style="font-size: 12px; color: var(--ink-mute)">Expires
+              <input name="expires_at" type="date" style="width: 100%; margin-top: 4px">
+            </label>
+            <label style="font-size: 12px; color: var(--ink-mute); grid-column: 1 / -1">Note
+              <input name="note" style="width: 100%; margin-top: 4px">
+            </label>
+            <button type="submit" class="btn" style="grid-column: 1 / -1; justify-self: end; min-height: 36px">Add quote</button>
+          </form>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Notes log</h3>
+        <form method="post" action="/selling/{{ t.id }}/notes/new">
+          <label for="tn" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">New note</label>
+          <textarea id="tn" name="body" rows="2" placeholder="Add a note as {{ current_user }}…"
+                    style="display: block; width: 100%"></textarea>
+          <div style="display: flex; justify-content: flex-end; margin-top: 8px">
+            <button type="submit" class="btn">Add note</button>
+          </div>
+        </form>
+        {% for n in sel.notes %}
+          <div style="padding: 10px 0; border-top: 1px solid var(--line-soft); margin-top: 10px">
+            <div style="font-size: 12px; color: var(--ink-mute)">
+              <strong style="color: var(--ink); font-weight: 600">{{ n['author'] }}</strong> · {{ n['created_at'] }}
+            </div>
+            <div style="white-space: pre-line">{{ n['body_md'] }}</div>
+          </div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="card">
+        <h3>No task selected</h3>
+        <div style="color: var(--ink-mute)">Add your first task from the "+ New task" button above.</div>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

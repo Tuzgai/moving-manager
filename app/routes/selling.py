@@ -264,6 +264,27 @@ async def add_quote(
     return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
 
 
+@router.post("/selling/{task_id}/complete")
+def complete_task(
+    task_id: int,
+    request: Request,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+):
+    """Mark a task Done. If called via HTMX returns an empty 200 so the
+    caller can swap/remove the row; otherwise redirects back where we came
+    from (so the plain-HTML form in /selling still works)."""
+    from fastapi.responses import HTMLResponse
+    it = items_repo.get(conn, task_id)
+    if it and it.type == "task":
+        items_repo.update(conn, task_id, status="Done")
+        activity_repo.log(conn, actor=who, verb="completed-task",
+                          text=f"marked {it.title} as done", item_id=task_id)
+    if request.headers.get("hx-request") == "true":
+        return HTMLResponse("", status_code=200)
+    return RedirectResponse(url=request.headers.get("referer", "/"), status_code=303)
+
+
 @router.post("/selling/{task_id}/quotes/choose")
 def choose_quote(
     task_id: int,

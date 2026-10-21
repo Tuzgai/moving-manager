@@ -57,10 +57,15 @@
       <span style="font-size: 13px; color: var(--ink-mute)">Assigned to {{ current_user }} or both</span>
     </div>
     {% for t in my_tasks %}
-      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft)">
-        <input type="checkbox" id="t{{ t.id }}" style="width: 20px; height: 20px; accent-color: var(--accent)"
-               hx-post="/selling/{{ t.id }}/complete" hx-swap="none" disabled title="(toggle not yet wired)">
-        <label for="t{{ t.id }}" style="flex-grow: 1; min-width: 0">
+      <div class="task-row" style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft)">
+        <input type="checkbox" id="t{{ t.id }}"
+               style="width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer"
+               title="Mark done"
+               hx-post="/selling/{{ t.id }}/complete"
+               hx-trigger="change[target.checked]"
+               hx-target="closest .task-row"
+               hx-swap="outerHTML swap:200ms">
+        <label for="t{{ t.id }}" style="flex-grow: 1; min-width: 0; cursor: pointer">
           <a href="/selling?task={{ t.id }}" style="display: block; font-weight: 500; color: var(--ink); text-decoration: none">{{ t.title }}</a>
           <span style="display: block; color: var(--ink-mute); font-size: 13px">{{ t.sub }}</span>
         </label>

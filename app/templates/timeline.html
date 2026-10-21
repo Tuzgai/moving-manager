@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Household Hub — Timeline{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Timeline</h1>
+    <div class="sub">{{ total }} dates
+      {% if show == 'upcoming' %}upcoming{% else %}total{% endif %}
+    </div>
+  </div>
+  <div style="display: flex; gap: 8px">
+    <a href="/timeline?show=upcoming" class="chip" aria-pressed="{{ 'true' if show == 'upcoming' else 'false' }}">Upcoming</a>
+    <a href="/timeline?show=all" class="chip" aria-pressed="{{ 'true' if show == 'all' else 'false' }}">All</a>
+  </div>
+</header>
+
+<section class="card">
+  <h2>Add date</h2>
+  <form method="post" action="/timeline/new"
+        style="display: grid; grid-template-columns: 2fr 1fr 1fr 2fr auto; gap: 10px; align-items: end">
+    <label style="font-size: 12px; color: var(--ink-mute)">Title
+      <input name="title" required style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Date
+      <input name="on_date" type="date" required style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Category
+      <select name="category" style="width: 100%; margin-top: 4px">
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+      </select>
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Link to (optional)
+      <select name="item_id" style="width: 100%; margin-top: 4px">
+        <option value="">— nothing —</option>
+        {% for it in items %}
+          <option value="{{ it['id'] }}">{{ it['type'] | capitalize }}: {{ it['title'] }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn">Add</button>
+  </form>
+</section>
+
+{% for g in group_list %}
+<section class="card">
+  <h2>{{ g.heading }}</h2>
+  {% for row in g['items'] %}
+    {% set r = row.row %}
+    {% set is_buy = r['category'] == 'buy' %}
+    <div style="display: flex; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line-soft)">
+      <div style="width: 54px; flex-shrink: 0; text-align: center; font-family: var(--mono)">
+        <div style="font-size: 11px; color: var(--ink-mute)">{{ row.date.mon }}</div>
+        <div style="font-size: 20px; font-weight: 500">{{ row.date.day }}</div>
+      </div>
+      <div style="flex-grow: 1; min-width: 0">
+        <div style="font-weight: 500">{{ r['title'] }}</div>
+        <div style="color: var(--ink-mute); font-size: 13px">
+          {{ r['sub'] or '' }}
+          {% if r['item_title'] %}
+            {% if r['sub'] %} · {% endif %}
+            {% set href = '/houses/' ~ r['item_id'] if r['item_type'] == 'house' else '/selling?task=' ~ r['item_id'] %}
+            <a href="{{ href }}">{{ r['item_title'] }}</a>
+          {% endif %}
+        </div>
+      </div>
+      <span class="pill" style="background: {{ 'var(--buy-bg)' if is_buy else 'var(--sell-bg)' }};
+                                 color: {{ 'var(--buy-fg)' if is_buy else 'var(--sell-fg)' }}">
+        {{ 'Buy' if is_buy else 'Sell' }}
+      </span>
+      <form method="post" action="/timeline/{{ r['id'] }}/delete" style="display: inline">
+        <button type="submit" title="Delete"
+                onclick="return confirm('Delete this date?')"
+                style="background: none; border: 0; color: var(--ink-mute); cursor: pointer; padding: 4px 8px">×</button>
+      </form>
+    </div>
+  {% endfor %}
+</section>
+{% else %}
+<section class="card">
+  <div style="color: var(--ink-mute)">No dates to show.</div>
+</section>
+{% endfor %}
+{% endblock %}

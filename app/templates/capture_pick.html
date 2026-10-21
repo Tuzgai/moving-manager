@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tour capture — pick a house</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body style="background: #F4F5F7">
+<header style="background: var(--sidebar); color: #fff; padding: 14px 16px">
+  <a href="/" style="color: var(--sidebar-ink-mute); font-size: 13px; text-decoration: none">← Home</a>
+  <h1 style="margin: 2px 0 0; font-size: 20px; font-weight: 600">Tour capture</h1>
+  <div style="color: var(--sidebar-ink-mute); font-size: 13px">Pick the house you're touring</div>
+</header>
+<main style="padding: 16px; display: flex; flex-direction: column; gap: 10px">
+  {% for h in houses %}
+    <a href="/capture/{{ h.id }}" style="background: #fff; border: 1px solid var(--line);
+         border-radius: 8px; padding: 14px 16px; text-decoration: none; color: var(--ink);
+         display: flex; justify-content: space-between; align-items: center">
+      <div>
+        <div style="font-weight: 600">{{ h.title }}</div>
+        <div style="color: var(--ink-mute); font-size: 13px">{{ h.address or '—' }}</div>
+      </div>
+      <span style="color: var(--accent); font-size: 20px">›</span>
+    </a>
+  {% endfor %}
+</main>
+</body>
+</html>

@@ -33,17 +33,19 @@ def _templates(request: Request):
 
 
 def _target_list_date(conn: sqlite3.Connection) -> str | None:
-    """Earliest key_date tagged 'sell' with the word 'listing' in its title.
-    Falls back to the earliest sell key_date, else None."""
+    """The key_date explicitly titled 'Target list date'. If someone deletes
+    it, the tile falls back to the earliest future sell key_date so the
+    dashboard still has something to show."""
     row = conn.execute(
-        "SELECT on_date FROM key_dates"
-        " WHERE category='sell' AND LOWER(title) LIKE '%listing%'"
+        "SELECT on_date FROM key_dates WHERE LOWER(title)='target list date'"
         " ORDER BY on_date LIMIT 1"
     ).fetchone()
     if row:
         return row["on_date"]
     row = conn.execute(
-        "SELECT on_date FROM key_dates WHERE category='sell' ORDER BY on_date LIMIT 1"
+        "SELECT on_date FROM key_dates"
+        " WHERE category='sell' AND on_date >= date('now')"
+        " ORDER BY on_date LIMIT 1"
     ).fetchone()
     return row["on_date"] if row else None
 

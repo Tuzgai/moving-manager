@@ -192,6 +192,8 @@ def seed(conn):
        sub="Lender needs updated pay stubs")
     kd(conn, title="Listing photos", on_date="2027-03-02", category="sell",
        sub="All staging tasks done by here")
+    kd(conn, title="Target list date", on_date="2027-04-01", category="sell",
+       sub="On the market by here")
     kd(conn, title="Target close", on_date="2026-12-15", category="buy", item_id=blue)
 
     # --- Activity feed ---

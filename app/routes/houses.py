@@ -10,9 +10,10 @@ from __future__ import annotations
 import sqlite3
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 
+from app import scrape
 from app.deps import current_user, get_db
 from app.models import House
 from app.repo import items as items_repo
@@ -130,6 +131,76 @@ def _compare_rows(houses: list[House]) -> list[dict]:
         rows[1]["cells"][i]["v"] = bb(h)
         rows[5]["cells"][i]["v"] = rating(h)
     return rows
+
+
+# ---- add from URL (must be registered before /houses/{house_id} since
+# FastAPI matches in order and 'new' would otherwise fail to parse as int) ----
+
+@router.get("/houses/new", response_class=HTMLResponse)
+def new_house_form(
+    request: Request,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+    url: str = "",
+    error: str = "",
+):
+    """Step 1 is a URL box. If a URL is already present we show step 2 — a
+    form pre-filled with what the scraper pulled out, letting the user fix
+    anything before saving."""
+    scraped = None
+    if url:
+        scraped = scrape.scrape(url)
+    ctx = page_ctx(request, conn, who, active="Houses")
+    ctx.update({
+        "url": url, "scraped": scraped, "error": error,
+        "statuses": STATUS_ORDER,
+    })
+    return _templates(request).TemplateResponse(request, "house_new.html", ctx)
+
+
+@router.post("/houses/new")
+def new_house_save(
+    request: Request,
+    conn: Annotated[sqlite3.Connection, Depends(get_db)],
+    who: Annotated[str, Depends(current_user)],
+    title: Annotated[str, Form()],
+    url: Annotated[str, Form()] = "",
+    address: Annotated[str, Form()] = "",
+    price: Annotated[str, Form()] = "",
+    beds: Annotated[str, Form()] = "",
+    baths: Annotated[str, Form()] = "",
+    sqft: Annotated[str, Form()] = "",
+    year_built: Annotated[str, Form()] = "",
+    status: Annotated[str, Form()] = "Interested",
+    image_url: Annotated[str, Form()] = "",
+):
+    def _int(s): return int(s) if s and s.lstrip("-").isdigit() else None
+    def _float(s):
+        try: return float(s) if s else None
+        except ValueError: return None
+    def _cents(s):
+        s = (s or "").replace("$", "").replace(",", "").strip()
+        if not s: return None
+        try: return int(round(float(s) * 100))
+        except ValueError: return None
+
+    fields: dict = {}
+    if url: fields["listing_url"] = url
+    if address: fields["address"] = address
+    if (c := _cents(price)) is not None: fields["price_cents"] = c
+    if (b := _float(beds)) is not None: fields["beds"] = b
+    if (ba := _float(baths)) is not None: fields["baths"] = ba
+    if (sf := _int(sqft)) is not None: fields["sqft"] = sf
+    if (yr := _int(year_built)) is not None: fields["year_built"] = yr
+    if image_url: fields["other_links"] = [{"label": "Hero image", "url": image_url}]
+
+    hid = items_repo.insert(
+        conn, type_="house",
+        title=title.strip() or "New house",
+        status=status if status in STATUS_ORDER else "Interested",
+        created_by=who, tags=["buy"], fields=fields,
+    )
+    return RedirectResponse(url=f"/houses/{hid}", status_code=303)
 
 
 # ---- detail page ----

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Household Hub — Add house{% endblock %}
+
+{% block main %}
+<a href="/houses" style="font-size: 13px">← All houses</a>
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Add a house</h1>
+    <div class="sub">Paste a listing URL and we'll pre-fill what we can.</div>
+  </div>
+</header>
+
+{% if error %}<div class="card" style="color: var(--warn-fg)">{{ error }}</div>{% endif %}
+
+<section class="card">
+  <h2>Step 1 — Listing URL</h2>
+  <form method="get" action="/houses/new" style="display: flex; gap: 8px">
+    <input name="url" type="url" value="{{ url }}" placeholder="https://www.zillow.com/..."
+           style="flex-grow: 1" {% if not url %}autofocus{% endif %}>
+    <button type="submit" class="btn">Fetch</button>
+  </form>
+  <div style="font-size: 12px; color: var(--ink-mute); margin-top: 6px">
+    Some listing sites block automated fetches. If we come back with nothing, just type the
+    details in by hand below — the URL will still be saved.
+  </div>
+</section>
+
+<section class="card">
+  <h2>Step 2 — Review and save</h2>
+  {% if scraped %}
+    <div style="font-size: 12px; color: var(--ink-mute); margin-bottom: 10px">
+      {% if scraped.fetched %}
+        Fetched · pulled details from <strong>{{ scraped.source }}</strong>.
+      {% else %}
+        Couldn't reach that URL (403, timeout, or network error) — enter the details by hand.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form method="post" action="/houses/new"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px">
+    <input type="hidden" name="url" value="{{ url }}">
+    <input type="hidden" name="image_url" value="{{ scraped.image_url if scraped else '' }}">
+
+    <label style="font-size: 12px; color: var(--ink-mute); grid-column: span 2">Nickname
+      <input name="title" required
+             value="{% if scraped %}{{ scraped.title | default('') | truncate(60) }}{% endif %}"
+             placeholder="e.g. Blue cape"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute); grid-column: span 2">Address
+      <input name="address" value="{{ scraped.address if scraped else '' }}" style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Status
+      <select name="status" style="width: 100%; margin-top: 4px">
+        {% for s in statuses %}<option {% if s == 'Interested' %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">List price ($)
+      <input name="price" type="number" step="1000" min="0"
+             value="{% if scraped and scraped.price_cents %}{{ scraped.price_cents // 100 }}{% endif %}"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Beds
+      <input name="beds" type="number" step="0.5" min="0"
+             value="{% if scraped and scraped.beds is not none %}{{ '%g' | format(scraped.beds) }}{% endif %}"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Baths
+      <input name="baths" type="number" step="0.5" min="0"
+             value="{% if scraped and scraped.baths is not none %}{{ '%g' | format(scraped.baths) }}{% endif %}"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Finished sqft
+      <input name="sqft" type="number" step="10" min="0"
+             value="{% if scraped and scraped.sqft %}{{ scraped.sqft }}{% endif %}"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Year built
+      <input name="year_built" type="number" step="1" min="1700" max="2100"
+             value="{% if scraped and scraped.year_built %}{{ scraped.year_built }}{% endif %}"
+             style="width: 100%; margin-top: 4px">
+    </label>
+    {% if scraped and scraped.description %}
+      <div style="grid-column: 1 / -1; font-size: 12px; color: var(--ink-mute); padding-top: 4px">
+        <strong>Listing blurb:</strong> {{ scraped.description | truncate(300) }}
+      </div>
+    {% endif %}
+    {% if scraped and scraped.image_url %}
+      <div style="grid-column: 1 / -1; font-size: 12px; color: var(--ink-mute)">
+        <strong>Hero image:</strong> <a href="{{ scraped.image_url }}" target="_blank" rel="noopener">{{ scraped.image_url | truncate(80) }}</a>
+      </div>
+    {% endif %}
+    <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end">
+      <button type="submit" class="btn">Save house</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

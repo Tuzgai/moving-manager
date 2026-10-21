@@ -1,0 +1,25 @@
+[project]
+name = "household-hub"
+version = "0.1.0"
+description = "Self-hosted web app for managing selling one house and buying another."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.12",
+    "pillow>=11.0",
+    "markdown-it-py>=3.0",
+    "bleach>=6.2",
+    "python-slugify>=8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "httpx>=0.28",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

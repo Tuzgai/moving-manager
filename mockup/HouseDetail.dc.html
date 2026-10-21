@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Blue cape</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 20px 12px; background: #1B1F24; color: #E8EAED; display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 4px 10px 18px; font-weight: 600; font-size: 15px">Household Hub</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+<a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 10px; border-radius: 6px; text-decoration: none; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}"><span>{{item.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B0B9">{{item.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1; min-height: 24px"></div>
+<label for="who" style="padding: 0 10px; font-size: 12px; color: #A9B0B9">Viewing as</label>
+<select id="who" style="margin: 4px 10px 0; min-height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #3A424C; background: #262C33; color: #E8EAED; font: inherit"><option>Stuart</option><option>Partner</option></select>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 24px 32px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1240px">
+
+<a href="Houses.dc.html" style="font-size: 13px">← All houses</a>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+<div style="flex: 1 1 320px">
+<h1 style="margin: 0; font-size: 26px; font-weight: 600">Blue cape</h1>
+<div style="color: #5B636E">[Address], Richfield MN · <a href="#">Listing on Zillow ↗</a> · <a href="#">MLS sheet ↗</a></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<label for="status" style="font-size: 12px; color: #5B636E">Status</label>
+<select id="status" style="min-height: 40px; padding: 0 10px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit"><option>Interested</option><option>Toured</option><option>Considering</option><option selected>Offer out</option><option>Under contract</option><option>Passed</option></select>
+</div>
+<div style="display: flex; gap: 8px">
+<div style="padding: 6px 12px; border: 1px solid #E1E4E8; background: #FFFFFF; border-radius: 6px; text-align: center"><div style="font-size: 11px; color: #5B636E">Stuart</div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">4 / 5</div></div>
+<div style="padding: 6px 12px; border: 1px solid #E1E4E8; background: #FFFFFF; border-radius: 6px; text-align: center"><div style="font-size: 11px; color: #5B636E">Partner</div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">4 / 5</div></div>
+</div>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<div style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section aria-labelledby="facts" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="facts" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Details</h2>
+<dl style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 20px; margin: 0">
+<sc-for list="{{facts}}" as="f" hint-placeholder-count="8">
+<div><dt style="font-size: 12px; color: #5B636E">{{f.k}}</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{f.v}}</dd></div>
+</sc-for>
+</dl>
+<div style="margin-top: 14px; font-size: 12px; color: #5B636E">Custom fields: add any key/value, e.g. “Radon test” or “Walk to light rail”.</div>
+</section>
+
+<section aria-labelledby="notes" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="notes" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Notes log</h2>
+<label for="newnote" style="font-size: 12px; color: #5B636E">Add a note as Stuart</label>
+<textarea id="newnote" rows="3" placeholder="What did you notice? Markdown works." style="display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; border: 1px solid #CDD2D8; border-radius: 6px; font: inherit; resize: vertical"></textarea>
+<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px">
+<button type="button" style="min-height: 40px; padding: 0 14px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit; cursor: pointer">Attach photo</button>
+<button type="button" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #1F6F5C; color: #FFFFFF; font: inherit; font-weight: 500; cursor: pointer">Add note</button>
+</div>
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="4">
+<article style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #EEF0F2; margin-top: 10px">
+<span aria-hidden="true" style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; background: {{n.avBg}}; color: {{n.avFg}}">{{n.initial}}</span>
+<div style="min-width: 0">
+<div style="font-size: 12px; color: #5B636E"><strong style="color: #1B1F24; font-weight: 600">{{n.who}}</strong> · {{n.when}}</div>
+<div style="white-space: pre-line">{{n.text}}</div>
+</div>
+</article>
+</sc-for>
+</section>
+
+<section aria-labelledby="photos" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 id="photos" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Photos</h2><span style="font-size: 13px; color: #5B636E">14 from tour · Oct 12</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px">
+<sc-for list="{{photos}}" as="p" hint-placeholder-count="6">
+<div style="aspect-ratio: 4 / 3; background: #DDE1E6; border-radius: 6px; display: flex; align-items: flex-end; padding: 6px; box-sizing: border-box; font-size: 11px; color: #3D444D">{{p}}</div>
+</sc-for>
+</div>
+</section>
+
+</div>
+
+<aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<section aria-labelledby="offers" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 id="offers" style="margin: 0 0 8px; font-size: 16px; font-weight: 600">Offers</h2><a href="#" style="font-size: 13px">+ New offer</a></div>
+<sc-for list="{{offers}}" as="o" hint-placeholder-count="2">
+<div style="padding: 12px 0; border-top: 1px solid #EEF0F2">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 16px">{{o.amt}}</span>
+<span style="padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{o.bg}}; color: {{o.fg}}">{{o.status}}</span>
+</div>
+<div style="color: #5B636E; font-size: 13px">{{o.sub}}</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px">
+<sc-for list="{{o.docs}}" as="d" hint-placeholder-count="2">
+<a href="Documents.dc.html" style="font-size: 12px; padding: 3px 8px; border: 1px solid #CDD2D8; border-radius: 4px; text-decoration: none; color: #1B1F24">{{d}}</a>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="hfiles" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h2 id="hfiles" style="margin: 0 0 8px; font-size: 16px; font-weight: 600">Files</h2><a href="#" style="font-size: 13px">+ Attach</a></div>
+<sc-for list="{{files}}" as="f" hint-placeholder-count="3">
+<div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid #EEF0F2; font-size: 13px">
+<a href="Documents.dc.html" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.n}}</a><span style="color: #5B636E; flex-shrink: 0">{{f.tag}}</span>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="ppl" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="ppl" style="margin: 0 0 8px; font-size: 16px; font-weight: 600">People</h2>
+<sc-for list="{{people}}" as="p" hint-placeholder-count="2">
+<div style="padding: 8px 0; border-top: 1px solid #EEF0F2; font-size: 13px"><div style="font-weight: 500">{{p.n}}</div><div style="color: #5B636E">{{p.r}}</div></div>
+</sc-for>
+</section>
+
+<section aria-labelledby="hdates" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="hdates" style="margin: 0 0 8px; font-size: 16px; font-weight: 600">Key dates</h2>
+<sc-for list="{{dates}}" as="d" hint-placeholder-count="3">
+<div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid #EEF0F2; font-size: 13px"><span>{{d.t}}</span><span style="font-family: 'IBM Plex Mono', monospace; color: {{d.fg}}">{{d.d}}</span></div>
+</sc-for>
+</section>
+
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = 'Houses';
+    const navItems = [
+      { label: 'Dashboard', href: 'Main.dc.html', count: '' },
+      { label: 'Houses', href: 'Houses.dc.html', count: '6' },
+      { label: 'Selling', href: 'Selling.dc.html', count: '11' },
+      { label: 'Documents', href: 'Documents.dc.html', count: '34' },
+      { label: 'Contacts', href: '#', count: '9' },
+      { label: 'Timeline', href: '#', count: '' }
+    ];
+    const nav = navItems.map((n) => ({ ...n, bg: n.label === active ? '#2C333B' : 'transparent', fg: n.label === active ? '#FFFFFF' : '#C9CED4', weight: n.label === active ? '600' : '400' }));
+    const stu = { who: 'Stuart', avBg: '#D6ECE5', avFg: '#164F42', initial: 'S' };
+    const par = { who: 'Partner', avBg: '#E6E0F5', avFg: '#4A3480', initial: 'P' };
+    return {
+      nav,
+      facts: [
+        { k: 'List price', v: '$365,000' }, { k: 'Beds / baths', v: '3 / 2' },
+        { k: 'Finished sq ft', v: '1,640' }, { k: 'Year built', v: '1948' },
+        { k: 'Lot', v: '0.18 ac' }, { k: 'Garage', v: '2-car det.' },
+        { k: 'Taxes / yr', v: '$4,210' }, { k: 'Toured', v: 'Oct 12' }
+      ],
+      notes: [
+        { ...par, when: 'Oct 19, 9:14 pm', text: 'Drove by at night — street is quiet, decent lighting.\nNeighbor said the sewer line was replaced 2020; ask for proof.' },
+        { ...stu, when: 'Oct 12, 3:40 pm', text: 'Kitchen redone 2022, nice. Second bath is tight.\nBasement dry, some efflorescence on north wall.' },
+        { ...stu, when: 'Oct 12, 2:05 pm', text: 'Roof looks newer than listing says. Furnace 2011.' }
+      ],
+      photos: ['Kitchen', 'Living room', 'Bath 2', 'Basement N wall', 'Garage', 'Backyard'],
+      offers: [
+        { amt: '$368,000', status: 'Pending', bg: '#1F6F5C', fg: '#FFFFFF', sub: 'Sent Oct 20 · expires Oct 22, 5 pm · inspection + financing contingent', docs: ['Purchase agreement.pdf', 'Pre-approval letter.pdf'] }
+      ],
+      files: [
+        { n: 'Seller disclosure.pdf', tag: 'Disclosure' },
+        { n: 'MLS listing sheet.pdf', tag: 'Listing' },
+        { n: 'Prior inspection report.pdf', tag: 'Inspection' }
+      ],
+      people: [
+        { n: '[Listing agent]', r: 'Seller’s agent · phone, email' },
+        { n: '[Your agent]', r: 'Buyer’s agent' }
+      ],
+      dates: [
+        { t: 'Offer response deadline', d: 'Oct 22', fg: '#B3261E' },
+        { t: 'Inspection window ends', d: '+10 days', fg: '#5B636E' },
+        { t: 'Target close', d: 'Dec 15', fg: '#5B636E' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

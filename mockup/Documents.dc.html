@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Documents</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 20px 12px; background: #1B1F24; color: #E8EAED; display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 4px 10px 18px; font-weight: 600; font-size: 15px">Household Hub</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+<a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 10px; border-radius: 6px; text-decoration: none; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}"><span>{{item.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B0B9">{{item.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1; min-height: 24px"></div>
+<label for="who" style="padding: 0 10px; font-size: 12px; color: #A9B0B9">Viewing as</label>
+<select id="who" style="margin: 4px 10px 0; min-height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #3A424C; background: #262C33; color: #E8EAED; font: inherit"><option>Stuart</option><option>Partner</option></select>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1240px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex-grow: 1">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600">Documents</h1>
+<div style="color: #5B636E">34 files · stored as plain files in <code style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">~/Dropbox/household/files/</code></div>
+</div>
+<label for="dq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search documents</label>
+<input id="dq" type="search" placeholder="Search names and tags…" style="min-height: 40px; width: 260px; max-width: 100%; box-sizing: border-box; padding: 0 12px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit">
+</header>
+
+<div style="border: 2px dashed #B8BFC7; border-radius: 8px; padding: 18px; text-align: center; color: #5B636E; background: #FFFFFF">
+<strong style="color: #1B1F24; font-weight: 600">Drop files here</strong> or <button type="button" style="border: 0; background: none; color: #1F6F5C; font: inherit; text-decoration: underline; cursor: pointer; min-height: 32px">browse</button> — you’ll pick tags and (optionally) link it to a house or task
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<aside aria-label="Tags" style="flex: 1 1 180px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 12px 0">
+<div style="padding: 4px 14px 8px; font-size: 12px; color: #5B636E; text-transform: uppercase; letter-spacing: 0.05em">Tags</div>
+<sc-for list="{{tags}}" as="t" hint-placeholder-count="8">
+<button type="button" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="display: flex; width: 100%; justify-content: space-between; min-height: 40px; padding: 0 14px; border: 0; background: {{t.bg}}; font: inherit; color: #1B1F24; font-weight: {{t.w}}; cursor: pointer; align-items: center"><span>{{t.name}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B636E">{{t.n}}</span></button>
+</sc-for>
+<div style="padding: 10px 14px 0; border-top: 1px solid #EEF0F2; margin-top: 6px"><a href="#" style="font-size: 13px">+ New tag</a></div>
+</aside>
+
+<section aria-label="Files" style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 6px 0">
+<div style="overflow-x: auto">
+<table style="border-collapse: collapse; width: 100%; min-width: 680px; font-size: 13px">
+<thead><tr style="color: #5B636E; text-align: left">
+<th scope="col" style="padding: 10px 14px; font-weight: 500">Name</th><th scope="col" style="padding: 10px 8px; font-weight: 500">Tags</th><th scope="col" style="padding: 10px 8px; font-weight: 500">Linked to</th><th scope="col" style="padding: 10px 8px; font-weight: 500">Added</th><th scope="col" style="padding: 10px 14px; font-weight: 500; text-align: right">Size</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{docs}}" as="d" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #EEF0F2">
+<td style="padding: 10px 14px"><a href="#" style="font-weight: 500">{{d.name}}</a><div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B636E">{{d.path}}</div></td>
+<td style="padding: 10px 8px"><div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{d.tags}}" as="tg" hint-placeholder-count="1"><span style="padding: 1px 7px; border-radius: 4px; background: #EEF0F2; font-size: 12px">{{tg}}</span></sc-for></div></td>
+<td style="padding: 10px 8px"><a href="{{d.linkHref}}">{{d.link}}</a></td>
+<td style="padding: 10px 8px; color: #5B636E">{{d.added}}</td>
+<td style="padding: 10px 14px; text-align: right; font-family: 'IBM Plex Mono', monospace; color: #5B636E">{{d.size}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}"><div style="padding: 24px 14px; color: #5B636E">No files with this tag yet.</div></sc-if>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tag: 'All' }; }
+  renderVals() {
+    const active = 'Documents';
+    const navItems = [
+      { label: 'Dashboard', href: 'Main.dc.html', count: '' },
+      { label: 'Houses', href: 'Houses.dc.html', count: '6' },
+      { label: 'Selling', href: 'Selling.dc.html', count: '11' },
+      { label: 'Documents', href: 'Documents.dc.html', count: '34' },
+      { label: 'Contacts', href: '#', count: '9' },
+      { label: 'Timeline', href: '#', count: '' }
+    ];
+    const nav = navItems.map((n) => ({ ...n, bg: n.label === active ? '#2C333B' : 'transparent', fg: n.label === active ? '#FFFFFF' : '#C9CED4', weight: n.label === active ? '600' : '400' }));
+    const all = [
+      { name: 'Purchase agreement — Blue cape', path: 'buy/blue-cape/purchase-agreement.pdf', tags: ['Offers'], link: 'Blue cape', linkHref: 'HouseDetail.dc.html', added: 'Stuart · Oct 20', size: '1.2 MB' },
+      { name: 'Pre-approval letter', path: 'buy/pre-approval-2026-10.pdf', tags: ['Mortgage', 'Offers'], link: 'Blue cape', linkHref: 'HouseDetail.dc.html', added: 'Stuart · Oct 20', size: '180 KB' },
+      { name: 'Seller disclosure — Blue cape', path: 'buy/blue-cape/disclosure.pdf', tags: ['Disclosure'], link: 'Blue cape', linkHref: 'HouseDetail.dc.html', added: 'Partner · Oct 13', size: '640 KB' },
+      { name: 'Floor refinish quote — Vendor B', path: 'sell/quotes/floors-vendor-b.pdf', tags: ['Quotes'], link: 'Refinish floors', linkHref: 'Selling.dc.html', added: 'Stuart · Oct 20', size: '95 KB' },
+      { name: 'Floor refinish quote — Vendor A', path: 'sell/quotes/floors-vendor-a.pdf', tags: ['Quotes'], link: 'Refinish floors', linkHref: 'Selling.dc.html', added: 'Stuart · Oct 9', size: '110 KB' },
+      { name: 'Current mortgage statement', path: 'mortgage/2026-10-statement.pdf', tags: ['Mortgage'], link: '—', linkHref: '#', added: 'Stuart · Oct 18', size: '210 KB' },
+      { name: 'Original closing disclosure (Blaine)', path: 'mortgage/closing-disclosure-orig.pdf', tags: ['Mortgage', 'Closing'], link: '—', linkHref: '#', added: 'Partner · Oct 2', size: '2.4 MB' },
+      { name: 'Homeowners insurance declarations', path: 'insurance/declarations-2026.pdf', tags: ['Insurance'], link: '—', linkHref: '#', added: 'Partner · Oct 2', size: '330 KB' },
+      { name: 'Property tax statement 2026', path: 'taxes/property-tax-2026.pdf', tags: ['Taxes'], link: '—', linkHref: '#', added: 'Stuart · Sep 30', size: '150 KB' },
+      { name: 'Furnace service record', path: 'sell/records/furnace-2025.jpg', tags: ['Records'], link: 'Listing prep', linkHref: 'Selling.dc.html', added: 'Stuart · Sep 28', size: '1.8 MB' }
+    ];
+    const names = ['All', 'Offers', 'Mortgage', 'Quotes', 'Inspection', 'Disclosure', 'Closing', 'Insurance', 'Taxes', 'Records'];
+    const cur = this.state.tag;
+    const tags = names.map((n) => {
+      const on = n === cur;
+      return { name: n, n: n === 'All' ? all.length : all.filter((d) => d.tags.includes(n)).length, pressed: on ? 'true' : 'false', bg: on ? '#E6F3EE' : 'transparent', w: on ? '600' : '400', pick: () => this.setState({ tag: n }) };
+    });
+    const docs = cur === 'All' ? all : all.filter((d) => d.tags.includes(cur));
+    return { nav, tags, docs, empty: docs.length === 0 };
+  }
+}
+</script>
+</body>
+</html>

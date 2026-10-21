@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Selling</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 20px 12px; background: #1B1F24; color: #E8EAED; display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 4px 10px 18px; font-weight: 600; font-size: 15px">Household Hub</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+<a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 10px; border-radius: 6px; text-decoration: none; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}"><span>{{item.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B0B9">{{item.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1; min-height: 24px"></div>
+<label for="who" style="padding: 0 10px; font-size: 12px; color: #A9B0B9">Viewing as</label>
+<select id="who" style="margin: 4px 10px 0; min-height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #3A424C; background: #262C33; color: #E8EAED; font: inherit"><option>Stuart</option><option>Partner</option></select>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1240px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex-grow: 1">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600">Selling — Blaine house</h1>
+<div style="color: #5B636E">Target list date Apr 1 · 11 open, 7 done</div>
+</div>
+<div style="display: flex; gap: 20px; padding: 10px 16px; background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px">
+<div><div style="font-size: 12px; color: #5B636E">Chosen quotes</div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 18px">{{total}}</div></div>
+<div><div style="font-size: 12px; color: #5B636E">Spent so far</div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 18px">$1,240</div></div>
+</div>
+<button type="button" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #1F6F5C; color: #FFFFFF; font: inherit; font-weight: 500; cursor: pointer">+ New task</button>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+<section aria-label="Task list" style="flex: 1 1 320px; min-width: 0; background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 14px 0">
+<div style="display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap">
+<label for="grp" style="font-size: 12px; color: #5B636E; align-self: center">Group by</label>
+<select id="grp" style="min-height: 36px; padding: 0 8px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit; font-size: 13px"><option>Area</option><option>Status</option><option>Assignee</option></select>
+<label for="who2" style="font-size: 12px; color: #5B636E; align-self: center; margin-left: 6px">Show</label>
+<select id="who2" style="min-height: 36px; padding: 0 8px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit; font-size: 13px"><option>Everyone</option><option>Mine</option></select>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<div>
+<div style="padding: 10px 14px 4px; font-size: 12px; color: #5B636E; text-transform: uppercase; letter-spacing: 0.05em">{{g.area}}</div>
+<sc-for list="{{g.tasks}}" as="t" hint-placeholder-count="3">
+<button type="button" onClick="{{t.pick}}" aria-current="{{t.cur}}" style="display: flex; width: 100%; text-align: left; gap: 10px; align-items: center; min-height: 48px; padding: 6px 14px; border: 0; background: {{t.bg}}; font: inherit; color: #1B1F24; cursor: pointer">
+<span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: {{t.dot}}"></span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 500">{{t.title}}</span><span style="display: block; font-size: 12px; color: #5B636E">{{t.sub}}</span></span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B636E">{{t.q}}</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<div style="padding: 12px 14px 0; font-size: 12px; color: #5B636E">Dot: red = high · amber = med · grey = low priority. Right number = quotes collected.</div>
+</section>
+
+<section aria-labelledby="tt" style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+<div style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="tt" style="margin: 0; font-size: 20px; font-weight: 600">{{sel.title}}</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 14px">
+<sc-for list="{{sel.fields}}" as="f" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<label for="{{f.id}}" style="font-size: 12px; color: #5B636E">{{f.k}}</label>
+<input id="{{f.id}}" value="{{f.v}}" style="min-height: 38px; padding: 0 10px; border: 1px solid #CDD2D8; border-radius: 6px; font: inherit; box-sizing: border-box; width: 100%">
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h3 style="margin: 0 0 10px; font-size: 16px; font-weight: 600">Quotes</h3><a href="#" style="font-size: 13px">+ Add quote</a></div>
+<div style="overflow-x: auto">
+<table style="border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px">
+<thead><tr style="color: #5B636E; text-align: left">
+<th scope="col" style="padding: 8px; font-weight: 500">Chosen</th><th scope="col" style="padding: 8px; font-weight: 500">Vendor</th><th scope="col" style="padding: 8px; font-weight: 500">Amount</th><th scope="col" style="padding: 8px; font-weight: 500">Received</th><th scope="col" style="padding: 8px; font-weight: 500">Expires</th><th scope="col" style="padding: 8px; font-weight: 500">File</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{sel.quotes}}" as="q" hint-placeholder-count="3">
+<tr style="border-top: 1px solid #EEF0F2; background: {{q.bg}}">
+<td style="padding: 8px"><input type="radio" name="chosen" aria-label="{{q.aria}}" checked="{{q.on}}" onChange="{{q.pick}}" style="width: 18px; height: 18px; accent-color: #1F6F5C"></td>
+<td style="padding: 8px"><div style="font-weight: 500">{{q.v}}</div><div style="color: #5B636E; font-size: 12px">{{q.note}}</div></td>
+<td style="padding: 8px; font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{q.amt}}</td>
+<td style="padding: 8px; font-family: 'IBM Plex Mono', monospace">{{q.rec}}</td>
+<td style="padding: 8px; font-family: 'IBM Plex Mono', monospace; color: {{q.expFg}}">{{q.exp}}</td>
+<td style="padding: 8px"><a href="Documents.dc.html">{{q.file}}</a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+
+<div style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h3 style="margin: 0 0 10px; font-size: 16px; font-weight: 600">Notes log</h3>
+<label for="tn" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">New note</label>
+<textarea id="tn" rows="2" placeholder="Add a note as Stuart…" style="display: block; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #CDD2D8; border-radius: 6px; font: inherit; resize: vertical"></textarea>
+<sc-for list="{{sel.notes}}" as="n" hint-placeholder-count="2">
+<div style="padding: 10px 0; border-top: 1px solid #EEF0F2; margin-top: 10px">
+<div style="font-size: 12px; color: #5B636E"><strong style="color: #1B1F24; font-weight: 600">{{n.who}}</strong> · {{n.when}}</div>
+<div>{{n.text}}</div>
+</div>
+</sc-for>
+</div>
+
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { task: 'floors', chosen: { floors: 1, roof: -1, paint: 0 } }; }
+  renderVals() {
+    const active = 'Selling';
+    const navItems = [
+      { label: 'Dashboard', href: 'Main.dc.html', count: '' },
+      { label: 'Houses', href: 'Houses.dc.html', count: '6' },
+      { label: 'Selling', href: 'Selling.dc.html', count: '11' },
+      { label: 'Documents', href: 'Documents.dc.html', count: '34' },
+      { label: 'Contacts', href: '#', count: '9' },
+      { label: 'Timeline', href: '#', count: '' }
+    ];
+    const nav = navItems.map((n) => ({ ...n, bg: n.label === active ? '#2C333B' : 'transparent', fg: n.label === active ? '#FFFFFF' : '#C9CED4', weight: n.label === active ? '600' : '400' }));
+    const pri = { High: '#B3261E', Med: '#C77700', Low: '#A9B0B9' };
+    const data = {
+      floors: { title: 'Refinish living room floors', area: 'Living room', pri: 'High', who: 'Stuart', status: 'Quoting', due: 'Feb 15',
+        quotes: [
+          { v: 'Vendor A', note: 'Sand + 2 coats, 3 days', amt: 3400, rec: 'Oct 9', exp: 'Dec 9', file: 'quote-a.pdf' },
+          { v: 'Vendor B', note: 'Sand + 3 coats, 4 days, moves furniture', amt: 2900, rec: 'Oct 20', exp: 'Nov 3', file: 'quote-b.pdf' }
+        ],
+        notes: [{ who: 'Stuart', when: 'Oct 20', text: 'B is cheaper but quote expires fast. Want a third bid before deciding.' }] },
+      roof: { title: 'Roof inspection + minor repair', area: 'Exterior', pri: 'Med', who: 'Both', status: 'Waiting', due: 'Nov 30',
+        quotes: [{ v: 'Vendor C', note: 'Inspection only', amt: 250, rec: 'Oct 15', exp: '—', file: 'roof-c.pdf' }],
+        notes: [{ who: 'Partner', when: 'Oct 15', text: 'Called C, waiting on repair estimate after inspection.' }] },
+      paint: { title: 'Patch + paint hallway', area: 'Hallway', pri: 'High', who: 'Both', status: 'Doing it ourselves', due: 'Nov 8',
+        quotes: [{ v: 'DIY materials', note: 'Paint, spackle, rollers', amt: 1950, rec: 'Oct 18', exp: '—', file: 'receipt.jpg' }],
+        notes: [] },
+      seal: { title: 'Replace garage door seal', area: 'Garage', pri: 'Low', who: 'Stuart', status: 'Not started', due: 'Dec 1', quotes: [], notes: [] },
+      base: { title: 'Declutter basement storage', area: 'Basement', pri: 'Med', who: 'Both', status: 'Not started', due: 'Jan 15', quotes: [], notes: [] }
+    };
+    const order = [['Living room', ['floors']], ['Hallway', ['paint']], ['Exterior', ['roof']], ['Garage', ['seal']], ['Basement', ['base']]];
+    const money = (n) => '$' + n.toLocaleString('en-US');
+    const ch = this.state.chosen;
+    const groups = order.map(([area, ids]) => ({ area, tasks: ids.map((id) => {
+      const t = data[id]; const on = id === this.state.task;
+      return { title: t.title, sub: t.status + ' · ' + t.who + ' · due ' + t.due, q: t.quotes.length ? String(t.quotes.length) : '', dot: pri[t.pri], bg: on ? '#E6F3EE' : 'transparent', cur: on ? 'true' : 'false', pick: () => this.setState({ task: id }) };
+    }) }));
+    let total = 0;
+    Object.keys(ch).forEach((k) => { if (ch[k] >= 0 && data[k].quotes[ch[k]]) total += data[k].quotes[ch[k]].amt; });
+    const id = this.state.task; const t = data[id];
+    const sel = {
+      title: t.title,
+      fields: [
+        { id: 'f1', k: 'Status', v: t.status }, { id: 'f2', k: 'Priority', v: t.pri },
+        { id: 'f3', k: 'Area', v: t.area }, { id: 'f4', k: 'Assignee', v: t.who }, { id: 'f5', k: 'Due', v: t.due }
+      ],
+      quotes: t.quotes.map((q, i) => {
+        const on = ch[id] === i;
+        return { ...q, amt: money(q.amt), on, aria: 'Choose ' + q.v, bg: on ? '#E6F3EE' : 'transparent', expFg: q.exp === 'Nov 3' ? '#B3261E' : '#1B1F24', pick: () => this.setState({ chosen: { ...ch, [id]: i } }) };
+      }),
+      notes: t.notes
+    };
+    return { nav, groups, sel, total: money(total) };
+  }
+}
+</script>
+</body>
+</html>

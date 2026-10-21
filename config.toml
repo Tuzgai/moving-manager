@@ -1,0 +1,21 @@
+# Household Hub configuration.
+# Copy to config.local.toml and edit paths for your machine if you want;
+# config.local.toml is gitignored and overrides this file.
+
+[app]
+host = "127.0.0.1"      # bind loopback only; Tailscale fronts it
+port = 8765
+# Live SQLite DB. Must NOT be inside Dropbox — Dropbox can corrupt a WAL-mode DB.
+data_dir = "~/.local/share/household-hub"
+
+[storage]
+# Files root. Human-readable tree lives under here; safe to put in Dropbox.
+files_root = "~/Dropbox/household/files"
+# Nightly SQLite snapshots land here. Keeps last 14.
+backup_dir = "~/Dropbox/household/db-backups"
+backup_keep = 14
+
+[users]
+# Order matters: first user is the default author on seed data.
+# The sidebar user picker lets either name set a cookie.
+names = ["Stuart", "Ashley"]

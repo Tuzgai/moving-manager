@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 20px 12px; background: #1B1F24; color: #E8EAED; display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 4px 10px 18px; font-weight: 600; font-size: 15px; letter-spacing: 0.01em">Household Hub</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+<a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 10px; border-radius: 6px; text-decoration: none; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}"><span>{{item.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B0B9">{{item.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1; min-height: 24px"></div>
+<label for="who" style="padding: 0 10px; font-size: 12px; color: #A9B0B9">Viewing as</label>
+<select id="who" style="margin: 4px 10px 0; min-height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #3A424C; background: #262C33; color: #E8EAED; font: inherit">
+<option>Stuart</option>
+<option>Partner</option>
+</select>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px; max-width: 1240px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex-grow: 1">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600">Dashboard</h1>
+<div style="color: #5B636E">Wednesday, Oct 21</div>
+</div>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search everything</label>
+<input id="q" type="search" placeholder="Search houses, tasks, docs…" style="min-height: 40px; width: 280px; max-width: 100%; box-sizing: border-box; padding: 0 12px; border: 1px solid #CDD2D8; border-radius: 6px; background: #FFFFFF; font: inherit">
+<button type="button" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: {{accent}}; color: #FFFFFF; font: inherit; font-weight: 500; cursor: pointer">+ Quick add</button>
+</header>
+
+<section aria-label="At a glance" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 16px">
+<div style="font-size: 12px; color: #5B636E; text-transform: uppercase; letter-spacing: 0.05em">{{s.label}}</div>
+<div style="font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 500; margin-top: 4px">{{s.value}}</div>
+<div style="color: #5B636E; font-size: 13px">{{s.sub}}</div>
+</div>
+</sc-for>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start">
+
+<section aria-labelledby="upc" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h2 id="upc" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Coming up</h2>
+<a href="#" style="font-size: 13px">Full timeline</a>
+</div>
+<sc-for list="{{dates}}" as="d" hint-placeholder-count="6">
+<div style="display: flex; gap: 14px; align-items: center; padding: 10px 0; border-top: 1px solid #EEF0F2">
+<div style="width: 54px; flex-shrink: 0; text-align: center; font-family: 'IBM Plex Mono', monospace">
+<div style="font-size: 11px; color: #5B636E">{{d.mon}}</div>
+<div style="font-size: 20px; font-weight: 500">{{d.day}}</div>
+</div>
+<div style="flex-grow: 1; min-width: 0">
+<div style="font-weight: 500">{{d.title}}</div>
+<div style="color: #5B636E; font-size: 13px">{{d.sub}}</div>
+</div>
+<span style="padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{d.tagBg}}; color: {{d.tagFg}}">{{d.tag}}</span>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="mine" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h2 id="mine" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">My tasks</h2>
+<span style="font-size: 13px; color: #5B636E">Assigned to Stuart or both</span>
+</div>
+<sc-for list="{{tasks}}" as="t" hint-placeholder-count="5">
+<div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid #EEF0F2">
+<input type="checkbox" id="{{t.id}}" style="width: 20px; height: 20px; accent-color: #1F6F5C">
+<label for="{{t.id}}" style="flex-grow: 1; min-width: 0">
+<span style="display: block; font-weight: 500">{{t.title}}</span>
+<span style="display: block; color: #5B636E; font-size: 13px">{{t.sub}}</span>
+</label>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{t.dueFg}}">{{t.due}}</span>
+</div>
+</sc-for>
+<a href="Selling.dc.html" style="display: inline-block; margin-top: 10px; font-size: 13px">All selling tasks</a>
+</section>
+
+<section aria-labelledby="act" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<h2 id="act" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Recent activity</h2>
+<sc-for list="{{activity}}" as="a" hint-placeholder-count="5">
+<div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F2">
+<span aria-hidden="true" style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; background: {{a.avBg}}; color: {{a.avFg}}">{{a.initial}}</span>
+<div style="min-width: 0">
+<div><strong style="font-weight: 600">{{a.who}}</strong> {{a.text}}</div>
+<div style="color: #5B636E; font-size: 12px">{{a.when}}</div>
+</div>
+</div>
+</sc-for>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F6F5C","options":["#1F6F5C","#2D5BA8","#8A4B12","#1B1F24"]},"$preview":{"width":1280,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = 'Dashboard';
+    const navItems = [
+      { label: 'Dashboard', href: 'Main.dc.html', count: '' },
+      { label: 'Houses', href: 'Houses.dc.html', count: '6' },
+      { label: 'Selling', href: 'Selling.dc.html', count: '11' },
+      { label: 'Documents', href: 'Documents.dc.html', count: '34' },
+      { label: 'Contacts', href: '#', count: '9' },
+      { label: 'Timeline', href: '#', count: '' }
+    ];
+    const nav = navItems.map((n) => ({ ...n, bg: n.label === active ? '#2C333B' : 'transparent', fg: n.label === active ? '#FFFFFF' : '#C9CED4', weight: n.label === active ? '600' : '400' }));
+    const buy = { tagBg: '#E3EEF9', tagFg: '#1D4E89' };
+    const sell = { tagBg: '#FDEBD3', tagFg: '#7A4300' };
+    const stu = { avBg: '#D6ECE5', avFg: '#164F42', initial: 'S' };
+    const par = { avBg: '#E6E0F5', avFg: '#4A3480', initial: 'P' };
+    return {
+      accent: this.props.accent ?? '#1F6F5C',
+      nav,
+      stats: [
+        { label: 'Houses toured', value: '6', sub: '2 still in the running' },
+        { label: 'Open sell tasks', value: '11', sub: '3 waiting on quotes' },
+        { label: 'Prep cost', value: '$4,850', sub: 'Sum of chosen quotes' },
+        { label: 'Target list date', value: 'Apr 1', sub: '162 days out' }
+      ],
+      dates: [
+        { mon: 'OCT', day: '24', title: 'Tour: Brick bungalow', sub: '2:00 pm with listing agent', tag: 'Buy', ...buy },
+        { mon: 'NOV', day: '3', title: 'Floor refinish quote expires', sub: 'Vendor B · $2,900', tag: 'Sell', ...sell },
+        { mon: 'NOV', day: '15', title: 'Pre-listing inspection', sub: 'Inspector booked, 3 hrs', tag: 'Sell', ...sell },
+        { mon: 'JAN', day: '10', title: 'Mortgage pre-approval renewal', sub: 'Lender needs updated pay stubs', tag: 'Buy', ...buy },
+        { mon: 'MAR', day: '2', title: 'Listing photos', sub: 'All staging tasks done by here', tag: 'Sell', ...sell }
+      ],
+      tasks: [
+        { id: 't1', title: 'Patch + paint hallway', sub: 'Hallway · High · both', due: 'Nov 8', dueFg: '#8A4B12' },
+        { id: 't2', title: 'Get 3rd floor-refinish quote', sub: 'Living room · High', due: 'Nov 1', dueFg: '#B3261E' },
+        { id: 't3', title: 'Replace garage door seal', sub: 'Garage · Low', due: 'Dec 1', dueFg: '#5B636E' },
+        { id: 't4', title: 'Declutter basement storage', sub: 'Basement · Med · both', due: 'Jan 15', dueFg: '#5B636E' }
+      ],
+      activity: [
+        { who: 'Partner', text: 'added a note to Corner rambler: “Backyard smaller than photos.”', when: 'Today, 7:52 am', ...par },
+        { who: 'Stuart', text: 'attached a quote (Vendor B, $2,900) to Refinish floors', when: 'Yesterday, 6:10 pm', ...stu },
+        { who: 'Partner', text: 'rated Blue cape 4/5', when: 'Oct 19', ...par },
+        { who: 'Stuart', text: 'uploaded Current mortgage statement (PDF)', when: 'Oct 18', ...stu }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Houses</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F5F7}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 100vh; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 14px; line-height: 1.45">
+
+<nav aria-label="Main" style="flex: 1 1 200px; box-sizing: border-box; padding: 20px 12px; background: #1B1F24; color: #E8EAED; display: flex; flex-direction: column; gap: 4px">
+<div style="padding: 4px 10px 18px; font-weight: 600; font-size: 15px">Household Hub</div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="6">
+<a href="{{item.href}}" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 10px; border-radius: 6px; text-decoration: none; background: {{item.bg}}; color: {{item.fg}}; font-weight: {{item.weight}}"><span>{{item.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A9B0B9">{{item.count}}</span></a>
+</sc-for>
+<div style="flex-grow: 1; min-height: 24px"></div>
+<label for="who" style="padding: 0 10px; font-size: 12px; color: #A9B0B9">Viewing as</label>
+<select id="who" style="margin: 4px 10px 0; min-height: 40px; padding: 0 8px; border-radius: 6px; border: 1px solid #3A424C; background: #262C33; color: #E8EAED; font: inherit"><option>Stuart</option><option>Partner</option></select>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 22px; max-width: 1240px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex-grow: 1">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600">Houses</h1>
+<div style="color: #5B636E">Buying in Richfield · 6 tracked</div>
+</div>
+<button type="button" style="min-height: 40px; padding: 0 16px; border: 0; border-radius: 6px; background: #1F6F5C; color: #FFFFFF; font: inherit; font-weight: 500; cursor: pointer">+ Add house from listing URL</button>
+</header>
+
+<div role="group" aria-label="Filter by status" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+<button type="button" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid {{f.border}}; background: {{f.bg}}; color: {{f.fg}}; font: inherit; font-size: 13px; cursor: pointer">{{f.label}} <span style="font-family: 'IBM Plex Mono', monospace">{{f.n}}</span></button>
+</sc-for>
+</div>
+
+<section aria-label="House cards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px">
+<sc-for list="{{houses}}" as="h" hint-placeholder-count="4">
+<a href="HouseDetail.dc.html" style="display: flex; flex-direction: column; text-decoration: none; color: #1B1F24; background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; overflow: hidden">
+<div style="height: 140px; background: #DDE1E6; display: flex; align-items: center; justify-content: center; color: #5B636E; font-size: 12px">Listing photo</div>
+<div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+<span style="font-weight: 600; font-size: 16px">{{h.nick}}</span>
+<span style="padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{h.sBg}}; color: {{h.sFg}}">{{h.status}}</span>
+</div>
+<div style="color: #5B636E; font-size: 13px">{{h.addr}}</div>
+<div style="display: flex; gap: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 13px"><span>{{h.price}}</span><span>{{h.bb}}</span><span>{{h.sqft}}</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; color: #5B636E; border-top: 1px solid #EEF0F2; padding-top: 8px; margin-top: 2px">
+<span>S <strong style="color: #1B1F24; font-weight: 600">{{h.rs}}</strong> · P <strong style="color: #1B1F24; font-weight: 600">{{h.rp}}</strong></span>
+<span>{{h.tour}}</span>
+</div>
+</div>
+</a>
+</sc-for>
+</section>
+
+<section aria-labelledby="cmp" style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 8px; padding: 18px 20px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="cmp" style="margin: 0 0 12px; font-size: 16px; font-weight: 600">Compare</h2>
+<span style="font-size: 13px; color: #5B636E">Pick up to 4 houses · best value in each row highlighted</span>
+</div>
+<div style="overflow-x: auto">
+<table style="border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13px">
+<thead>
+<tr>
+<th scope="col" style="text-align: left; padding: 8px 10px; color: #5B636E; font-weight: 500; width: 140px"></th>
+<sc-for list="{{cmpHead}}" as="c" hint-placeholder-count="4">
+<th scope="col" style="text-align: left; padding: 8px 10px; font-weight: 600; font-size: 14px">{{c}}</th>
+</sc-for>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{cmpRows}}" as="r" hint-placeholder-count="8">
+<tr style="border-top: 1px solid #EEF0F2">
+<th scope="row" style="text-align: left; padding: 9px 10px; color: #5B636E; font-weight: 500">{{r.label}}</th>
+<sc-for list="{{r.cells}}" as="cell" hint-placeholder-count="4">
+<td style="padding: 9px 10px; font-family: {{r.font}}; background: {{cell.bg}}; font-weight: {{cell.w}}">{{cell.v}}</td>
+</sc-for>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1220}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { filter: 'All' }; }
+  renderVals() {
+    const active = 'Houses';
+    const navItems = [
+      { label: 'Dashboard', href: 'Main.dc.html', count: '' },
+      { label: 'Houses', href: 'Houses.dc.html', count: '6' },
+      { label: 'Selling', href: 'Selling.dc.html', count: '11' },
+      { label: 'Documents', href: 'Documents.dc.html', count: '34' },
+      { label: 'Contacts', href: '#', count: '9' },
+      { label: 'Timeline', href: '#', count: '' }
+    ];
+    const nav = navItems.map((n) => ({ ...n, bg: n.label === active ? '#2C333B' : 'transparent', fg: n.label === active ? '#FFFFFF' : '#C9CED4', weight: n.label === active ? '600' : '400' }));
+    const st = {
+      Interested: { sBg: '#EEF0F2', sFg: '#3D444D' },
+      Toured: { sBg: '#E3EEF9', sFg: '#1D4E89' },
+      Considering: { sBg: '#D6ECE5', sFg: '#164F42' },
+      'Offer out': { sBg: '#1F6F5C', sFg: '#FFFFFF' },
+      Passed: { sBg: '#F4F5F7', sFg: '#5B636E' }
+    };
+    const all = [
+      { nick: 'Blue cape', addr: '[Address], Richfield', price: '$365k', bb: '3bd/2ba', sqft: '1,640 sf', rs: '4', rp: '4', tour: 'Toured Oct 12', status: 'Offer out' },
+      { nick: 'Corner rambler', addr: '[Address], Richfield', price: '$342k', bb: '3bd/1.5ba', sqft: '1,380 sf', rs: '4', rp: '3', tour: 'Toured Oct 19', status: 'Considering' },
+      { nick: 'Brick bungalow', addr: '[Address], Richfield', price: '$389k', bb: '4bd/2ba', sqft: '1,820 sf', rs: '–', rp: '–', tour: 'Tour Oct 24', status: 'Interested' },
+      { nick: 'Split-level w/ deck', addr: '[Address], Richfield', price: '$355k', bb: '3bd/2ba', sqft: '1,710 sf', rs: '3', rp: '3', tour: 'Toured Oct 5', status: 'Toured' },
+      { nick: 'Tudor near park', addr: '[Address], Richfield', price: '$410k', bb: '3bd/2ba', sqft: '1,690 sf', rs: '2', rp: '3', tour: 'Toured Sep 28', status: 'Passed' }
+    ].map((h) => ({ ...h, ...st[h.status] }));
+    const f = this.state.filter;
+    const names = ['All', 'Interested', 'Toured', 'Considering', 'Offer out', 'Passed'];
+    const filters = names.map((n) => {
+      const on = n === f;
+      return { label: n, n: n === 'All' ? all.length : all.filter((h) => h.status === n).length, pressed: on ? 'true' : 'false', bg: on ? '#1B1F24' : '#FFFFFF', fg: on ? '#FFFFFF' : '#1B1F24', border: on ? '#1B1F24' : '#CDD2D8', pick: () => this.setState({ filter: n }) };
+    });
+    const houses = f === 'All' ? all : all.filter((h) => h.status === f);
+    const hi = '#E6F3EE';
+    const row = (label, vals, best, mono) => ({ label, font: mono ? "'IBM Plex Mono', monospace" : 'inherit', cells: vals.map((v, i) => ({ v, bg: i === best ? hi : 'transparent', w: i === best ? '600' : '400' })) });
+    return {
+      nav, filters, houses,
+      cmpHead: ['Blue cape', 'Corner rambler', 'Brick bungalow', 'Split-level'],
+      cmpRows: [
+        row('List price', ['$365,000', '$342,000', '$389,000', '$355,000'], 1, true),
+        row('Beds / baths', ['3 / 2', '3 / 1.5', '4 / 2', '3 / 2'], 2, true),
+        row('Finished sq ft', ['1,640', '1,380', '1,820', '1,710'], 2, true),
+        row('$ / sq ft', ['$223', '$248', '$214', '$208'], 3, true),
+        row('Garage', ['2-car detached', '1-car attached', '2-car detached', '2-car tuck-under'], -1, false),
+        row('Rating (S / P)', ['4 / 4', '4 / 3', '– / –', '3 / 3'], 0, true),
+        row('Best thing', ['Kitchen redone 2022', 'Walk to park', 'Big lot', 'Deck + yard'], -1, false),
+        row('Worst thing', ['Small 2nd bath', 'Tiny backyard', 'Original windows', 'Dark lower level'], -1, false)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

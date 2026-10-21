@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Household Hub — Tour capture</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1F6F5C}a:hover{color:#164F42}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #F4F5F7; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #1B1F24; font-size: 15px; line-height: 1.45; display: flex; flex-direction: column; overflow: hidden">
+
+<header style="background: #1B1F24; color: #FFFFFF; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 2px">
+<a href="#" style="color: #A9B0B9; font-size: 13px; text-decoration: none">← Houses</a>
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h1 style="margin: 0; font-size: 22px; font-weight: 600">Brick bungalow</h1>
+<span style="padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; background: #E3EEF9; color: #1D4E89">Touring now</span>
+</div>
+<div style="color: #A9B0B9; font-size: 13px">Capturing as Stuart</div>
+</header>
+
+<div style="flex-grow: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px">
+
+<button type="button" style="min-height: 64px; border: 0; border-radius: 10px; background: #1F6F5C; color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer">
+<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13.5" r="3.5"></circle></svg>
+Take photo
+</button>
+
+<div>
+<div style="font-size: 13px; color: #5B636E; margin-bottom: 6px">This tour · 5 photos</div>
+<div style="display: flex; gap: 8px">
+<sc-for list="{{shots}}" as="s" hint-placeholder-count="4">
+<div style="width: 76px; height: 76px; flex-shrink: 0; border-radius: 8px; background: #DDE1E6; display: flex; align-items: flex-end; padding: 4px; box-sizing: border-box; font-size: 10px; color: #3D444D">{{s}}</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="qn" style="font-size: 13px; color: #5B636E">Quick note</label>
+<textarea id="qn" rows="4" placeholder="Roof age? Smells? Street noise?" style="width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #CDD2D8; border-radius: 8px; font: inherit; resize: none; background: #FFFFFF"></textarea>
+<div role="group" aria-label="Tag this note" style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="4">
+<button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-size: 14px; cursor: pointer">{{c.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<fieldset style="border: 0; margin: 0; padding: 0">
+<legend style="font-size: 13px; color: #5B636E; margin-bottom: 6px; padding: 0">Your gut rating</legend>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{ratings}}" as="r" hint-placeholder-count="5">
+<button type="button" onClick="{{r.pick}}" aria-pressed="{{r.pressed}}" style="min-height: 48px; border-radius: 8px; border: 1px solid {{r.border}}; background: {{r.bg}}; color: {{r.fg}}; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500; cursor: pointer">{{r.n}}</button>
+</sc-for>
+</div>
+</fieldset>
+
+</div>
+
+<div style="padding: 12px 16px 20px; background: #FFFFFF; border-top: 1px solid #E1E4E8">
+<button type="button" style="width: 100%; min-height: 52px; border: 0; border-radius: 10px; background: #1B1F24; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Save to notes log</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { rating: 4, chips: { Pro: true } }; }
+  renderVals() {
+    const sel = this.state.chips;
+    const chips = ['Pro', 'Con', 'Question for agent', 'Fix needed'].map((label) => {
+      const on = !!sel[label];
+      return { label, pressed: on ? 'true' : 'false', bg: on ? '#1F6F5C' : '#FFFFFF', fg: on ? '#FFFFFF' : '#1B1F24', border: on ? '#1F6F5C' : '#CDD2D8', pick: () => this.setState({ chips: { ...sel, [label]: !on } }) };
+    });
+    const ratings = [1, 2, 3, 4, 5].map((n) => {
+      const on = n === this.state.rating;
+      return { n, pressed: on ? 'true' : 'false', bg: on ? '#1B1F24' : '#FFFFFF', fg: on ? '#FFFFFF' : '#1B1F24', border: on ? '#1B1F24' : '#CDD2D8', pick: () => this.setState({ rating: n }) };
+    });
+    return { shots: ['Front', 'Kitchen', 'Windows', 'Lot'], chips, ratings };
+  }
+}
+</script>
+</body>
+</html>

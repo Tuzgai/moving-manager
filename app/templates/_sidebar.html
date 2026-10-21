@@ -1,0 +1,23 @@
+<nav class="sidebar" aria-label="Main">
+  <h1>Household Hub</h1>
+  {% set active = nav_active | default('') %}
+  {% for item in nav %}
+    <a href="{{ item.href }}"
+       class="nav-link{% if item.label == active %} active{% endif %}">
+      <span>{{ item.label }}</span>
+      <span class="count">{{ item.count }}</span>
+    </a>
+  {% endfor %}
+
+  <div class="spacer"></div>
+
+  <form method="post" action="/set-user">
+    <label for="who">Viewing as</label>
+    <select id="who" name="who" onchange="this.form.submit()">
+      {% for u in users %}
+        <option value="{{ u }}" {% if u == current_user %}selected{% endif %}>{{ u }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn ghost" style="margin: 6px 10px 0;">Set</button></noscript>
+  </form>
+</nav>

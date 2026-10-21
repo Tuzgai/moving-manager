@@ -1,0 +1,19 @@
+{# Status pill for houses. Returns inline styles since the palette is per-status. #}
+{% macro house_pill(status) -%}
+  {%- set p = {
+    'Interested':    {'bg': '#EEF0F2', 'fg': '#3D444D'},
+    'Toured':        {'bg': '#E3EEF9', 'fg': '#1D4E89'},
+    'Considering':   {'bg': '#D6ECE5', 'fg': '#164F42'},
+    'Offer out':     {'bg': '#1F6F5C', 'fg': '#FFFFFF'},
+    'Under contract':{'bg': '#1F6F5C', 'fg': '#FFFFFF'},
+    'Passed':        {'bg': '#F4F5F7', 'fg': '#5B636E'},
+  }.get(status, {'bg': '#EEF0F2', 'fg': '#3D444D'}) -%}
+  <span class="pill" style="background: {{ p.bg }}; color: {{ p.fg }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro avatar(name) -%}
+  {%- set c = name | avatar_colors -%}
+  <span class="avatar" aria-hidden="true" style="background: {{ c[0] }}; color: {{ c[1] }}">
+    {{- name | initial_of -}}
+  </span>
+{%- endmacro %}

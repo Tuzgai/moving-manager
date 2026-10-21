@@ -57,6 +57,21 @@ def test_scrape_fills_from_og_then_regex():
     assert r.source in ("open-graph", "regex")
 
 
+ZILLOW_STYLE = """
+<script type="application/ld+json">
+{"@type":["RealEstateListing","Product"],"name":"8810 Van Buren St NE, Blaine, MN 55434",
+ "offers":{"price":"294600"}}
+</script>
+"""
+
+
+def test_address_named_listing_backfills_address_and_shortens_nickname():
+    r = scrape.scrape("http://example.test/", html_text=ZILLOW_STYLE)
+    assert r.address == "8810 Van Buren St NE, Blaine, MN 55434"
+    assert r.title == "8810 Van Buren St NE"
+    assert r.price_cents == 29_460_000
+
+
 def test_scrape_returns_empty_on_fetch_failure(monkeypatch):
     monkeypatch.setattr(scrape, "fetch", lambda url: None)
     r = scrape.scrape("http://unreachable.test/")

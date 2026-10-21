@@ -220,6 +220,13 @@ def scrape(url: str, html_text: str | None = None) -> ScrapedListing:
     #    text often holds "3 beds · 2 baths · 1,640 sqft" verbatim)
     regex_used = _pull_from_regex(body, out)
 
+    # Zillow-style listings name themselves by full address but omit the
+    # address object; use the name as the address and shorten the nickname.
+    if out.title and re.match(r"^\d+\s+\S+.*,", out.title):
+        if not out.address:
+            out.address = re.split(r"\s*[|·—]\s*", out.title, maxsplit=1)[0].strip()
+        out.title = nickname_from_title(out.title)
+
     if jsonld_used:
         out.source = "json-ld"
     elif og_used:

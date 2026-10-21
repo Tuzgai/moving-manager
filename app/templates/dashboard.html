@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar %}
+
+{% block title %}Household Hub — Dashboard{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Dashboard</h1>
+    <div class="sub">{{ today_label }}</div>
+  </div>
+  <form method="get" action="/search" style="display: flex; gap: 8px">
+    <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search everything</label>
+    <input id="q" name="q" type="search" placeholder="Search houses, tasks, docs…"
+           style="width: 280px; max-width: 100%">
+  </form>
+</header>
+
+<section aria-label="At a glance"
+         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px">
+  {% for s in stats %}
+    <div class="stat">
+      <div class="label">{{ s.label }}</div>
+      <div class="value">{{ s.value }}</div>
+      <div class="sub">{{ s.sub }}</div>
+    </div>
+  {% endfor %}
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start">
+
+  <section aria-labelledby="upc" class="card">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 id="upc">Coming up</h2>
+      <a href="/timeline" style="font-size: 13px">Full timeline</a>
+    </div>
+    {% for d in dates %}
+      <div class="date-row">
+        <div class="cal">
+          <div class="mon">{{ d.mon }}</div>
+          <div class="day">{{ d.day }}</div>
+        </div>
+        <div class="text">
+          <div class="title">{{ d.title }}</div>
+          <div class="sub">{{ d.sub }}</div>
+        </div>
+        <span class="pill" style="background: {{ d.tag_bg }}; color: {{ d.tag_fg }}">{{ d.tag }}</span>
+      </div>
+    {% else %}
+      <div style="color: var(--ink-mute); padding-top: 10px">No upcoming dates.</div>
+    {% endfor %}
+  </section>
+
+  <section aria-labelledby="mine" class="card">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 id="mine">My tasks</h2>
+      <span style="font-size: 13px; color: var(--ink-mute)">Assigned to {{ current_user }} or both</span>
+    </div>
+    {% for t in my_tasks %}
+      <div style="display: flex; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft)">
+        <input type="checkbox" id="t{{ t.id }}" style="width: 20px; height: 20px; accent-color: var(--accent)"
+               hx-post="/selling/{{ t.id }}/complete" hx-swap="none" disabled title="(toggle not yet wired)">
+        <label for="t{{ t.id }}" style="flex-grow: 1; min-width: 0">
+          <a href="/selling?task={{ t.id }}" style="display: block; font-weight: 500; color: var(--ink); text-decoration: none">{{ t.title }}</a>
+          <span style="display: block; color: var(--ink-mute); font-size: 13px">{{ t.sub }}</span>
+        </label>
+        <span style="font-family: var(--mono); font-size: 12px; color: {{ t.due_fg }}">{{ t.due }}</span>
+      </div>
+    {% else %}
+      <div style="color: var(--ink-mute); padding-top: 10px">Nothing on your plate.</div>
+    {% endfor %}
+    <a href="/selling" style="display: inline-block; margin-top: 10px; font-size: 13px">All selling tasks</a>
+  </section>
+
+  <section aria-labelledby="act" class="card">
+    <h2 id="act">Recent activity</h2>
+    {% for a in activity %}
+      <div style="display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line-soft)">
+        {{ avatar(a['actor']) }}
+        <div style="min-width: 0">
+          <div><strong style="font-weight: 600">{{ a['actor'] }}</strong> {{ a['text'] }}</div>
+          <div style="color: var(--ink-mute); font-size: 12px">{{ a['created_at'] }}</div>
+        </div>
+      </div>
+    {% else %}
+      <div style="color: var(--ink-mute); padding-top: 10px">No activity yet.</div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

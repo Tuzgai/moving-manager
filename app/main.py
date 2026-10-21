@@ -58,17 +58,12 @@ app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "app" / "static"))
 
 
 # --- routers ---
-from app.routes import documents, houses, selling  # noqa: E402
+from app.routes import dashboard, documents, houses, selling  # noqa: E402
 
+app.include_router(dashboard.router)
 app.include_router(houses.router)
 app.include_router(selling.router)
 app.include_router(documents.router)
-
-
-@app.get("/")
-def root() -> RedirectResponse:
-    # Dashboard is slice 4; for now land on the houses page.
-    return RedirectResponse(url="/houses", status_code=302)
 
 
 @app.post("/set-user")

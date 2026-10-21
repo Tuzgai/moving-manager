@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Household Hub — Documents{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Documents</h1>
+    <div class="sub">
+      {{ total }} file{{ '' if total == 1 else 's' }} ·
+      stored as plain files in <code style="font-family: var(--mono); font-size: 13px">{{ files_root }}</code>
+    </div>
+  </div>
+  <form method="get" action="/documents" style="display: flex; gap: 8px">
+    {% if tag != 'All' %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
+    <label for="dq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search documents</label>
+    <input id="dq" name="q" type="search" value="{{ q }}" placeholder="Search names and tags…"
+           style="width: 260px; max-width: 100%">
+  </form>
+</header>
+
+<form id="upload-form" method="post" action="/documents/upload" enctype="multipart/form-data"
+      style="background: #fff; border: 2px dashed #B8BFC7; border-radius: 8px; padding: 16px;
+             display: flex; flex-direction: column; gap: 10px"
+      data-drop>
+  <div style="text-align: center; color: var(--ink-mute)">
+    <strong style="color: var(--ink); font-weight: 600">Drop files here</strong>
+    or <label for="docfiles" style="color: var(--accent); text-decoration: underline; cursor: pointer">browse</label>
+    — pick tags and (optionally) link it to a house or task
+  </div>
+  <input id="docfiles" name="files" type="file" multiple style="display: none">
+
+  <div data-queue style="font-size: 13px; color: var(--ink-mute); min-height: 1.2em; text-align: center"></div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end">
+    <label style="font-size: 12px; color: var(--ink-mute)">Tags (comma-separated)
+      <input name="tags" placeholder="e.g. Mortgage, Closing" style="width: 100%; margin-top: 4px">
+    </label>
+    <label style="font-size: 12px; color: var(--ink-mute)">Link to
+      <select name="link_item_id" style="width: 100%; margin-top: 4px">
+        <option value="">— nothing —</option>
+        {% for it in items %}
+          <option value="{{ it['id'] }}">{{ it['type'] | capitalize }}: {{ it['title'] }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="btn" style="min-height: 40px">Upload</button>
+  </div>
+  <div style="font-size: 11px; color: var(--ink-mute); text-align: center">Up to {{ max_mb }} MB per file.</div>
+</form>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+  <aside aria-label="Tags" style="flex: 1 1 180px; min-width: 0; background: #fff;
+         border: 1px solid var(--line); border-radius: 8px; padding: 12px 0">
+    <div style="padding: 4px 14px 8px; font-size: 12px; color: var(--ink-mute);
+                text-transform: uppercase; letter-spacing: 0.05em">Tags</div>
+    {% for t in tag_list %}
+      <a href="/documents?tag={{ t.name | urlencode }}{% if q %}&q={{ q | urlencode }}{% endif %}"
+         aria-pressed="{{ 'true' if t.active else 'false' }}"
+         style="display: flex; width: 100%; justify-content: space-between; min-height: 40px;
+                padding: 0 14px; align-items: center; text-decoration: none; color: var(--ink);
+                font-weight: {{ '600' if t.active else '400' }};
+                background: {{ 'var(--accent-tint)' if t.active else 'transparent' }}">
+        <span>{{ t.name }}</span>
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--ink-mute)">{{ t.n }}</span>
+      </a>
+    {% endfor %}
+  </aside>
+
+  <section aria-label="Files" style="flex: 999 1 560px; min-width: 0; background: #fff;
+           border: 1px solid var(--line); border-radius: 8px; padding: 6px 0">
+    {% if files %}
+    <div style="overflow-x: auto">
+      <table class="cmp" style="min-width: 680px">
+        <thead>
+          <tr style="color: var(--ink-mute); text-align: left">
+            <th scope="col" style="padding: 10px 14px; font-weight: 500">Name</th>
+            <th scope="col" style="padding: 10px 8px; font-weight: 500">Tags</th>
+            <th scope="col" style="padding: 10px 8px; font-weight: 500">Linked to</th>
+            <th scope="col" style="padding: 10px 8px; font-weight: 500">Added</th>
+            <th scope="col" style="padding: 10px 14px; font-weight: 500; text-align: right">Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+            <tr>
+              <td style="padding: 10px 14px">
+                <div style="display: flex; gap: 10px; align-items: center">
+                  {% if f.thumb %}
+                    <img src="/documents/thumb/{{ f.id }}" alt=""
+                         style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; background: #DDE1E6">
+                  {% endif %}
+                  <div style="min-width: 0">
+                    <a href="/documents/file/{{ f.id }}" target="_blank" rel="noopener"
+                       style="font-weight: 500">{{ f.name }}</a>
+                    <div style="font-family: var(--mono); font-size: 11px; color: var(--ink-mute); word-break: break-all">
+                      {{ f.path }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 10px 8px">
+                <div style="display: flex; flex-wrap: wrap; gap: 4px">
+                  {% for tg in f.tags %}
+                    <span style="padding: 1px 7px; border-radius: 4px; background: var(--line-soft); font-size: 12px">{{ tg }}</span>
+                  {% else %}
+                    <span style="color: var(--ink-mute); font-size: 12px">—</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td style="padding: 10px 8px">
+                {% for l in f.linked %}
+                  {% set href = '/houses/' ~ l['id'] if l['type'] == 'house' else '/selling?task=' ~ l['id'] %}
+                  <a href="{{ href }}">{{ l['title'] }}</a>{% if not loop.last %}<br>{% endif %}
+                {% else %}
+                  <span style="color: var(--ink-mute)">—</span>
+                {% endfor %}
+              </td>
+              <td style="padding: 10px 8px; color: var(--ink-mute)">
+                {{ f.added_by }} · {{ f.added_at[:10] }}
+              </td>
+              <td style="padding: 10px 14px; text-align: right; font-family: var(--mono); color: var(--ink-mute)">
+                {% if f.size_bytes < 1024 %}{{ f.size_bytes }} B
+                {% elif f.size_bytes < 1024 * 1024 %}{{ (f.size_bytes / 1024) | round(1) }} KB
+                {% else %}{{ (f.size_bytes / 1024 / 1024) | round(1) }} MB
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div style="padding: 24px 14px; color: var(--ink-mute)">
+        {% if q %}No files match "{{ q }}".
+        {% elif tag != 'All' %}No files tagged "{{ tag }}" yet.
+        {% else %}No files uploaded yet. Drop one in the box above.
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+// Progressive enhancement: drag-and-drop sets the hidden file input,
+// shows a queued-files hint, and auto-submits.
+(function () {
+  var form = document.querySelector('[data-drop]');
+  if (!form) return;
+  var input = form.querySelector('#docfiles');
+  var queue = form.querySelector('[data-queue]');
+
+  function listFiles(fileList) {
+    if (!fileList || !fileList.length) { queue.textContent = ''; return; }
+    var names = [];
+    for (var i = 0; i < fileList.length && i < 5; i++) names.push(fileList[i].name);
+    var extra = fileList.length > 5 ? ' (+' + (fileList.length - 5) + ' more)' : '';
+    queue.textContent = fileList.length + ' file(s) queued: ' + names.join(', ') + extra;
+  }
+
+  input.addEventListener('change', function () { listFiles(input.files); });
+
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    form.addEventListener(ev, function (e) {
+      e.preventDefault();
+      form.style.background = '#E6F3EE';
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    form.addEventListener(ev, function (e) {
+      e.preventDefault();
+      form.style.background = '#fff';
+    });
+  });
+  form.addEventListener('drop', function (e) {
+    var dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length) {
+      input.files = dt.files;
+      listFiles(input.files);
+    }
+  });
+})();
+</script>
+{% endblock %}

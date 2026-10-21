@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% from "_macros.html" import house_pill, avatar %}
+
+{% block title %}Household Hub — {{ house.title }}{% endblock %}
+
+{% block main %}
+<a href="/houses" style="font-size: 13px">← All houses</a>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px">
+  <div style="flex: 1 1 320px">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 600">{{ house.title }}</h1>
+    <div style="color: var(--ink-mute)">
+      {{ house.address or '—' }}
+      {% if house.listing_url %} · <a href="{{ house.listing_url }}" target="_blank" rel="noopener">Listing ↗</a>{% endif %}
+      {% for l in house.other_links %} · <a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.label }} ↗</a>{% endfor %}
+    </div>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <label for="status" style="font-size: 12px; color: var(--ink-mute)">Status</label>
+      <select id="status">
+        {% for s in statuses %}<option {% if s == house.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+    <div style="display: flex; gap: 8px">
+      {% for u in users %}
+        <div style="padding: 6px 12px; border: 1px solid var(--line); background: #fff; border-radius: 6px; text-align: center">
+          <div style="font-size: 11px; color: var(--ink-mute)">{{ u }}</div>
+          <div style="font-family: var(--mono); font-weight: 500">
+            {{ house.ratings.get(u, '–') }} / 5
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+
+  <div style="flex: 999 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-labelledby="facts" class="card">
+      <h2 id="facts">Details</h2>
+      <dl class="facts">
+        {% for f in facts %}
+          <div><dt>{{ f.k }}</dt><dd>{{ f.v }}</dd></div>
+        {% endfor %}
+      </dl>
+      <div style="margin-top: 14px; font-size: 12px; color: var(--ink-mute)">
+        Custom fields: add any key/value, e.g. "Radon test" or "Walk to light rail".
+      </div>
+    </section>
+
+    <section aria-labelledby="notes" class="card">
+      <h2 id="notes">Notes log</h2>
+      <label for="newnote" style="font-size: 12px; color: var(--ink-mute)">Add a note as {{ current_user }}</label>
+      <textarea id="newnote" rows="3" placeholder="What did you notice? Markdown works."
+                style="display: block; width: 100%; margin-top: 4px"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px">
+        <button type="button" class="btn ghost">Attach photo</button>
+        <button type="button" class="btn">Add note</button>
+      </div>
+      {% for n in notes %}
+        <article class="note">
+          {{ avatar(n['author']) }}
+          <div style="min-width: 0">
+            <div class="meta"><strong>{{ n['author'] }}</strong> · {{ n['created_at'] }}</div>
+            <div class="body">{{ n['body_md'] }}</div>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    <section aria-labelledby="photos" class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="photos">Photos</h2>
+        <span style="font-size: 13px; color: var(--ink-mute)">{{ photos | length }} photo{{ '' if photos|length == 1 else 's' }}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px">
+        {% for p in photos %}
+          <div style="aspect-ratio: 4 / 3; background: #DDE1E6; border-radius: 6px;
+                      display: flex; align-items: flex-end; padding: 6px; font-size: 11px; color: #3D444D">
+            {{ p['original_name'] }}
+          </div>
+        {% else %}
+          <div style="color: var(--ink-mute); font-size: 13px">No photos yet.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+
+    <section aria-labelledby="offers" class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="offers">Offers</h2>
+        <a href="#" style="font-size: 13px">+ New offer</a>
+      </div>
+      {% for row in offer_rows %}
+        {% set o = row.offer %}
+        <div style="padding: 12px 0; border-top: 1px solid var(--line-soft)">
+          <div style="display: flex; justify-content: space-between; align-items: center">
+            <span style="font-family: var(--mono); font-weight: 500; font-size: 16px">
+              {{ o['amount_cents'] | money }}
+            </span>
+            <span class="pill" style="background: var(--accent); color: #fff">{{ o['status'] }}</span>
+          </div>
+          <div style="color: var(--ink-mute); font-size: 13px">
+            {% if o['sent_date'] %}Sent {{ o['sent_date'] }}{% endif %}
+            {% if o['expires_at'] %} · expires {{ o['expires_at'] }}{% endif %}
+            {% if o['contingencies'] %} · {{ o['contingencies'] }}{% endif %}
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px">
+            {% for d in row.docs %}
+              <a href="/documents" style="font-size: 12px; padding: 3px 8px; border: 1px solid var(--input-border); border-radius: 4px; text-decoration: none; color: var(--ink)">
+                {{ d['original_name'] }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No offers yet.</div>
+      {% endfor %}
+    </section>
+
+    <section aria-labelledby="hfiles" class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 id="hfiles">Files</h2>
+        <a href="#" style="font-size: 13px">+ Attach</a>
+      </div>
+      {% for f in files %}
+        <div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
+          <a href="/documents" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ f['original_name'] }}</a>
+          <span style="color: var(--ink-mute); flex-shrink: 0">{{ f['role'] or '' }}</span>
+        </div>
+      {% else %}
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No files attached.</div>
+      {% endfor %}
+    </section>
+
+    <section aria-labelledby="ppl" class="card">
+      <h2 id="ppl">People</h2>
+      {% for p in people %}
+        <div style="padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
+          <div style="font-weight: 500">{{ p['name'] }}</div>
+          <div style="color: var(--ink-mute)">
+            {{ p['role'] or '' }}{% if p['phone'] %} · {{ p['phone'] }}{% endif %}{% if p['email'] %} · {{ p['email'] }}{% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No people linked.</div>
+      {% endfor %}
+    </section>
+
+    <section aria-labelledby="hdates" class="card">
+      <h2 id="hdates">Key dates</h2>
+      {% for d in dates %}
+        <div style="display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 13px">
+          <span>{{ d['title'] }}</span>
+          <span style="font-family: var(--mono); color: var(--ink-mute)">{{ d['on_date'] }}</span>
+        </div>
+      {% else %}
+        <div style="color: var(--ink-mute); font-size: 13px; padding-top: 8px">No dates yet.</div>
+      {% endfor %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

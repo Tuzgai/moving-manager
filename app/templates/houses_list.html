@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import house_pill %}
+
+{% block title %}Household Hub — Houses{% endblock %}
+
+{% block main %}
+<header class="page-header">
+  <div class="spacer-grow">
+    <h1>Houses</h1>
+    <div class="sub">{{ houses | length }} shown · {{ all_houses | length }} tracked</div>
+  </div>
+  <button type="button" class="btn">+ Add house from listing URL</button>
+</header>
+
+<div role="group" aria-label="Filter by status" style="display: flex; flex-wrap: wrap; gap: 8px">
+  {% for f in filters %}
+    <a href="?status={{ f.label | urlencode }}" class="chip" aria-pressed="{{ 'true' if f.pressed else 'false' }}">
+      {{ f.label }} <span class="n">{{ f.n }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+<section aria-label="House cards" class="cards-grid">
+  {% for h in houses %}
+    <a href="/houses/{{ h.id }}" class="house-card">
+      <div class="photo">Listing photo</div>
+      <div class="body">
+        <div class="title-row">
+          <span class="nick">{{ h.title }}</span>
+          {{ house_pill(h.status) }}
+        </div>
+        <div class="addr">{{ h.address or '—' }}</div>
+        <div class="nums">
+          <span>{{ h.price_cents | money_short if h.price_cents else '—' }}</span>
+          <span>{% if h.beds is not none and h.baths is not none %}{{ '%g'|format(h.beds) }}bd/{{ '%g'|format(h.baths) }}ba{% else %}—{% endif %}</span>
+          <span>{% if h.sqft %}{{ '{:,}'.format(h.sqft) }} sf{% else %}—{% endif %}</span>
+        </div>
+        <div class="foot">
+          <span>S <strong style="color: var(--ink); font-weight: 600">{{ h.ratings.get('Stuart', '–') }}</strong>
+                · A <strong style="color: var(--ink); font-weight: 600">{{ h.ratings.get('Ashley', '–') }}</strong></span>
+          <span>{{ h.tour_date or '' }}</span>
+        </div>
+      </div>
+    </a>
+  {% else %}
+    <div class="card">No houses match this filter yet.</div>
+  {% endfor %}
+</section>
+
+{% if cmp_houses %}
+<section aria-labelledby="cmp" class="card">
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+    <h2 id="cmp">Compare</h2>
+    <span style="font-size: 13px; color: var(--ink-mute)">
+      Pick up to 4 houses · best value in each row highlighted
+    </span>
+  </div>
+
+  <form method="get" style="margin: 6px 0 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+    <input type="hidden" name="status" value="{{ status }}">
+    {% for h in all_houses %}
+      <label style="display: inline-flex; gap: 6px; align-items: center; font-size: 13px">
+        <input type="checkbox" name="compare" value="{{ h.id }}"
+               style="accent-color: var(--accent)"
+               {% if h.id in picked_ids %}checked{% endif %}>
+        {{ h.title }}
+      </label>
+    {% endfor %}
+    <button type="submit" class="btn ghost" style="min-height: 32px; padding: 0 12px">Update compare</button>
+  </form>
+
+  <div class="cmp-wrap">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th scope="col" class="row-label"></th>
+          {% for h in cmp_houses %}
+            <th scope="col">{{ h.title }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in cmp_rows %}
+          <tr>
+            <th scope="row">{{ r.label }}</th>
+            {% for c in r.cells %}
+              <td class="{{ 'mono' if r.font == 'mono' else '' }} {{ 'best' if c.best else '' }}">{{ c.v }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

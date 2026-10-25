@@ -39,17 +39,17 @@ def _error_param(resp) -> str:
 
 
 def test_missing_form_field_redirects_back_with_message(client):
-    r = client.post("/selling/tasks/new", data={"area": "x"},
-                    headers={"referer": "http://hub.test/selling?task=1&error=old"})
+    r = client.post("/tasks/tasks/new", data={"area": "x"},
+                    headers={"referer": "http://hub.test/tasks?task=1&error=old"})
     msg = _error_param(r)
     assert msg == "Please add a title."
-    assert urlsplit(r.headers["location"]).path == "/selling"
+    assert urlsplit(r.headers["location"]).path == "/tasks"
     assert parse_qs(urlsplit(r.headers["location"]).query)["task"] == ["1"]
 
 
 def test_bad_quote_amount_is_a_message_not_a_500(client):
-    r = client.post(f"/selling/{client.task_id}/quotes/new", data={"vendor": "V", "amount": "abc"},
-                    headers={"referer": f"http://hub.test/selling?task={client.task_id}"})
+    r = client.post(f"/tasks/{client.task_id}/quotes/new", data={"vendor": "V", "amount": "abc"},
+                    headers={"referer": f"http://hub.test/tasks?task={client.task_id}"})
     assert "needs to be a number" in _error_param(r)
 
 
@@ -60,7 +60,7 @@ def test_upload_without_file_asks_for_one(client):
 
 
 def test_referer_host_is_ignored(client):
-    r = client.post("/selling/tasks/new", data={},
+    r = client.post("/tasks/tasks/new", data={},
                     headers={"referer": "https://evil.example/phish?x=1"})
     assert r.headers["location"].startswith("/phish?")  # path only, never another host
 
@@ -74,7 +74,7 @@ def test_bad_page_url_renders_html_error_page(client):
 
 
 def test_htmx_error_is_plain_text(client):
-    r = client.post("/selling/abc/complete", headers={"hx-request": "true"})
+    r = client.post("/tasks/abc/complete", headers={"hx-request": "true"})
     assert r.status_code == 404
     assert r.headers["content-type"].startswith("text/plain")
     assert "{" not in r.text

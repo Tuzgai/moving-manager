@@ -23,7 +23,7 @@ def nav(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     return [
         {"label": "Dashboard",  "href": "/",          "count": ""},
         {"label": "Houses",     "href": "/houses",    "count": str(house_n) if house_n else ""},
-        {"label": "Selling",    "href": "/selling",   "count": str(task_n) if task_n else ""},
+        {"label": "Tasks",      "href": "/tasks",   "count": str(task_n) if task_n else ""},
         {"label": "Documents",  "href": "/documents", "count": str(doc_n) if doc_n else ""},
         {"label": "Contacts",   "href": "/contacts",  "count": str(contact_n) if contact_n else ""},
         {"label": "Timeline",   "href": "/timeline",  "count": ""},

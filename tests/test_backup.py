@@ -80,3 +80,17 @@ def test_run_once_writes_then_rotates(tmp_path: Path):
     assert out.exists()
     # After writing one new + rotating to 14 total, dir should have exactly 14.
     assert len(list(backup_dir.glob("household-*.sqlite"))) == 14
+
+
+def test_admin_backup_endpoint_accepts_get_and_post(tmp_path: Path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app import config as app_config
+
+    real = app_config.load()
+    cfg = real.__class__(**{**real.__dict__, "data_dir": tmp_path, "backup_dir": tmp_path / "b"})
+    monkeypatch.setattr(app_config, "load", lambda: cfg)
+    with TestClient(app) as c:
+        for method in ("get", "post"):
+            r = getattr(c, method)("/admin/backup")
+            assert r.status_code == 200 and r.text.startswith("Wrote household-")

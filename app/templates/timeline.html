@@ -61,7 +61,7 @@
           {{ r['sub'] or '' }}
           {% if r['item_title'] %}
             {% if r['sub'] %} · {% endif %}
-            {% set href = '/houses/' ~ r['item_id'] if r['item_type'] == 'house' else '/selling?task=' ~ r['item_id'] %}
+            {% set href = '/houses/' ~ r['item_id'] if r['item_type'] == 'house' else '/tasks?task=' ~ r['item_id'] %}
             <a href="{{ href }}">{{ r['item_title'] }}</a>
           {% endif %}
         </div>

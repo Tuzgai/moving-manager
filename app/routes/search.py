@@ -44,7 +44,7 @@ def search(
             if it["type"] == "house":
                 href, badge = f"/houses/{it['id']}", "House"
             elif it["type"] == "task":
-                href, badge = f"/selling?task={it['id']}", "Task"
+                href, badge = f"/tasks?task={it['id']}", "Task"
             else:
                 href, badge = "/", "Item"
             # An item's indexed body is its tag list; not worth showing as a snippet.
@@ -61,7 +61,7 @@ def search(
             if parent["type"] == "house":
                 href = f"/houses/{parent['id']}"
             elif parent["type"] == "task":
-                href = f"/selling?task={parent['id']}"
+                href = f"/tasks?task={parent['id']}"
             else:
                 href = "/"
             rows_by_kind["note"].append({

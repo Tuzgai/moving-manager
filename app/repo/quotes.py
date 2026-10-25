@@ -53,7 +53,7 @@ def clear_choice(conn: sqlite3.Connection, task_id: int) -> None:
 
 
 def chosen_total_cents(conn: sqlite3.Connection) -> int:
-    """Sum of chosen quotes across every task — drives the Selling header total."""
+    """Sum of chosen quotes across every task — drives the Tasks header total."""
     row = conn.execute(
         "SELECT COALESCE(SUM(amount_cents), 0) AS t FROM quotes WHERE chosen = 1"
     ).fetchone()

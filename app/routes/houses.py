@@ -47,11 +47,11 @@ def _int(s):
 
 
 def _area(s):
-    """Square footage: whole numbers stay ints, decimals (e.g. 1640.5) are kept."""
+    """Square footage: decimals (e.g. 1640.5) are accepted and truncated to an int."""
     n = _float((s or "").replace(",", "").strip())
     if n is None or n < 0:
         return None
-    return int(n) if n.is_integer() else n
+    return int(n)
 
 
 def _float(s):

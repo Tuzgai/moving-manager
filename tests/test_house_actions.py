@@ -110,9 +110,9 @@ def test_html_upload_served_as_download(client):
     assert r.headers["x-content-type-options"] == "nosniff"
 
 
-def test_area_accepts_decimals_and_commas():
+def test_area_truncates_decimals_and_accepts_commas():
     from app.routes.houses import _area
     assert _area("1640") == 1640
-    assert _area("1,640.5") == 1640.5
-    assert _area("1640.0") == 1640 and isinstance(_area("1640.0"), int)
+    assert _area("1,640.5") == 1640 and isinstance(_area("1,640.5"), int)
+    assert _area("1640.9") == 1640
     assert _area("") is None and _area("abc") is None

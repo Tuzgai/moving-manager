@@ -50,7 +50,7 @@ class House:
     price_cents: int | None = None
     beds: float | None = None
     baths: float | None = None
-    sqft: int | None = None
+    sqft: int | float | None = None
     year_built: int | None = None
     lot: str = ""
     garage: str = ""

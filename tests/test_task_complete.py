@@ -37,7 +37,7 @@ def test_complete_sets_status_done(tmp_path, monkeypatch):
             conn.close()
 
         # HTMX call returns empty 200 so the row can be swapped out
-        r = client.post(f"/selling/{tid}/complete", headers={"hx-request": "true"})
+        r = client.post(f"/tasks/{tid}/complete", headers={"hx-request": "true"})
         assert r.status_code == 200
         assert r.text == ""
 

@@ -70,12 +70,12 @@ app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "app" / "static"))
 
 # --- routers ---
 from app.routes import (  # noqa: E402
-    admin, capture, contacts, dashboard, documents, houses, search, selling, timeline,
+    admin, capture, contacts, dashboard, documents, houses, search, tasks, timeline,
 )
 
 app.include_router(dashboard.router)
 app.include_router(houses.router)
-app.include_router(selling.router)
+app.include_router(tasks.router)
 app.include_router(documents.router)
 app.include_router(capture.router)
 app.include_router(contacts.router)

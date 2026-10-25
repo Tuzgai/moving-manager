@@ -111,7 +111,7 @@
               </td>
               <td style="padding: 10px 8px">
                 {% for l in f.linked %}
-                  {% set href = '/houses/' ~ l['id'] if l['type'] == 'house' else '/selling?task=' ~ l['id'] %}
+                  {% set href = '/houses/' ~ l['id'] if l['type'] == 'house' else '/tasks?task=' ~ l['id'] %}
                   <a href="{{ href }}">{{ l['title'] }}</a>{% if not loop.last %}<br>{% endif %}
                 {% else %}
                   <span style="color: var(--ink-mute)">—</span>

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Household Hub — Selling{% endblock %}
+{% block title %}Household Hub — Tasks{% endblock %}
 
 {% block main %}
 <header class="page-header">
   <div class="spacer-grow">
-    <h1>Selling</h1>
+    <h1>Tasks</h1>
     <div class="sub">{{ open_count }} open · {{ done_count }} done</div>
   </div>
   <div style="display: flex; gap: 20px; padding: 10px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 8px">
@@ -20,7 +20,7 @@
   </div>
   <details style="position: relative">
     <summary class="btn" style="list-style: none; display: inline-flex; align-items: center">+ New task</summary>
-    <form method="post" action="/selling/tasks/new"
+    <form method="post" action="/tasks/tasks/new"
           style="position: absolute; right: 0; top: 48px; z-index: 10; background: #fff;
                  border: 1px solid var(--line); border-radius: 8px; padding: 16px;
                  width: 320px; display: flex; flex-direction: column; gap: 8px;
@@ -54,7 +54,7 @@
 <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
 
   <section aria-label="Task list" style="flex: 1 1 320px; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 0">
-    <form method="get" action="/selling"
+    <form method="get" action="/tasks"
           style="display: flex; gap: 8px; padding: 0 14px 10px; flex-wrap: wrap; align-items: center">
       {% if selected_id %}<input type="hidden" name="task" value="{{ selected_id }}">{% endif %}
       <label style="font-size: 12px; color: var(--ink-mute)">Group by</label>
@@ -83,7 +83,7 @@
                     text-transform: uppercase; letter-spacing: 0.05em">{{ group_label }}</div>
         {% for t in tasks %}
           {% set active = t.id == selected_id %}
-          <a href="/selling?task={{ t.id }}&group_by={{ group_by }}&show={{ show }}"
+          <a href="/tasks?task={{ t.id }}&group_by={{ group_by }}&show={{ show }}"
              aria-current="{{ 'true' if active else 'false' }}"
              style="display: flex; text-decoration: none; color: var(--ink); gap: 10px;
                     align-items: center; min-height: 48px; padding: 6px 14px;
@@ -114,7 +114,7 @@
     {% if sel %}
       {% set t = sel.task %}
 
-      <form method="post" action="/selling/{{ t.id }}/update" class="card">
+      <form method="post" action="/tasks/{{ t.id }}/update" class="card">
         <label for="task-title" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Task title</label>
         <input id="task-title" name="title" value="{{ t.title }}" required
                style="width: 100%; font-size: 20px; font-weight: 600; border-color: transparent; padding: 0 6px; margin-left: -6px">
@@ -147,7 +147,7 @@
           </label>
         </div>
         <div style="display: flex; justify-content: space-between; margin-top: 10px">
-          <button type="submit" formaction="/selling/{{ t.id }}/delete" formnovalidate
+          <button type="submit" formaction="/tasks/{{ t.id }}/delete" formnovalidate
                   class="btn ghost" style="min-height: 36px; color: var(--warn-fg)"
                   onclick="return confirm('Delete this task and its quotes and notes?')">Delete task</button>
           <button type="submit" class="btn ghost" style="min-height: 36px">Save</button>
@@ -160,7 +160,7 @@
           <span style="font-size: 13px; color: var(--ink-mute)">{{ sel.quote_count }} on file</span>
         </div>
         {% if sel.quotes %}
-        <form method="post" action="/selling/{{ t.id }}/quotes/choose">
+        <form method="post" action="/tasks/{{ t.id }}/quotes/choose">
           <div style="overflow-x: auto">
             <table class="cmp" style="min-width: 560px">
               <thead>
@@ -217,7 +217,7 @@
 
         <details style="margin-top: 10px">
           <summary style="cursor: pointer; font-size: 13px; color: var(--accent)">+ Add quote</summary>
-          <form method="post" action="/selling/{{ t.id }}/quotes/new"
+          <form method="post" action="/tasks/{{ t.id }}/quotes/new"
                 enctype="multipart/form-data"
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
             <label style="font-size: 12px; color: var(--ink-mute)">Vendor
@@ -245,7 +245,7 @@
 
       <div class="card">
         <h3>Notes log</h3>
-        <form method="post" action="/selling/{{ t.id }}/notes/new">
+        <form method="post" action="/tasks/{{ t.id }}/notes/new">
           <label for="tn" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">New note</label>
           <textarea id="tn" name="body" rows="2" placeholder="Add a note as {{ current_user }}…"
                     style="display: block; width: 100%"></textarea>

@@ -68,7 +68,7 @@
           <td style="padding: 10px 8px">{% if c['email'] %}<a href="mailto:{{ c['email'] }}">{{ c['email'] }}</a>{% else %}—{% endif %}</td>
           <td style="padding: 10px 8px; font-size: 13px">
             {% for l in linked.get(c['id'], []) %}
-              {% set href = '/houses/' ~ l['id'] if l['type'] == 'house' else '/selling?task=' ~ l['id'] %}
+              {% set href = '/houses/' ~ l['id'] if l['type'] == 'house' else '/tasks?task=' ~ l['id'] %}
               <a href="{{ href }}">{{ l['title'] }}</a>
               <form method="post" action="/contacts/{{ c['id'] }}/unlink" style="display: inline">
                 <input type="hidden" name="item_id" value="{{ l['id'] }}">

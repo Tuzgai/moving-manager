@@ -1,4 +1,4 @@
-"""Selling page: tasks grouped (by area/status/assignee), task detail with
+"""Tasks page: tasks grouped (by area/status/assignee), task detail with
 editable fields, quotes table (one 'chosen' radio per task), notes log.
 
 Chosen-quote selection posts normally and we 303 back to the same task; the
@@ -62,8 +62,8 @@ def _group(tasks: list[Task], by: str) -> list[tuple[str, list[Task]]]:
     return [(k, buckets[k]) for k in keys]
 
 
-@router.get("/selling", response_class=HTMLResponse)
-def selling(
+@router.get("/tasks", response_class=HTMLResponse)
+def tasks_page(
     request: Request,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
     who: Annotated[str, Depends(current_user)],
@@ -109,7 +109,7 @@ def selling(
     }
 
     cfg = request.app.state.config
-    ctx = page_ctx(request, conn, who, active="Selling")
+    ctx = page_ctx(request, conn, who, active="Tasks")
     ctx.update({
         "groups": groups,
         "group_by": group_by,
@@ -127,7 +127,7 @@ def selling(
         "open_count": sum(1 for t in items_repo.list_tasks(conn) if t.status in OPEN_STATUSES),
         "done_count": sum(1 for t in items_repo.list_tasks(conn) if t.status == "Done"),
     })
-    return _templates(request).TemplateResponse(request, "selling.html", ctx)
+    return _templates(request).TemplateResponse(request, "tasks.html", ctx)
 
 
 def _spent_so_far(conn: sqlite3.Connection) -> int:
@@ -153,7 +153,7 @@ def _dollars_to_cents(s: str) -> int:
     return cents
 
 
-@router.post("/selling/tasks/new")
+@router.post("/tasks/tasks/new")
 def new_task(
     request: Request,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -169,10 +169,10 @@ def new_task(
         status="Not started", created_by=who, tags=["sell"],
         fields={"area": area, "priority": priority, "assignee": assignee, "due_date": due_date},
     )
-    return RedirectResponse(url=f"/selling?task={tid}", status_code=303)
+    return RedirectResponse(url=f"/tasks?task={tid}", status_code=303)
 
 
-@router.post("/selling/{task_id}/update")
+@router.post("/tasks/{task_id}/update")
 def update_task(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -185,14 +185,14 @@ def update_task(
 ):
     it = items_repo.get(conn, task_id)
     if not it or it.type != "task":
-        return RedirectResponse(url="/selling", status_code=303)
+        return RedirectResponse(url="/tasks", status_code=303)
     fields = dict(it.fields)
     fields.update(area=area, priority=priority, assignee=assignee, due_date=due_date)
     items_repo.update(conn, task_id, title=title, status=status, fields=fields)
-    return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
+    return RedirectResponse(url=f"/tasks?task={task_id}", status_code=303)
 
 
-@router.post("/selling/{task_id}/notes/new")
+@router.post("/tasks/{task_id}/notes/new")
 def add_note(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -208,10 +208,10 @@ def add_note(
                 conn, actor=who, verb="added-note",
                 text=f"added a note to {it.title}", item_id=task_id,
             )
-    return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
+    return RedirectResponse(url=f"/tasks?task={task_id}", status_code=303)
 
 
-@router.post("/selling/{task_id}/quotes/new")
+@router.post("/tasks/{task_id}/quotes/new")
 async def add_quote(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -256,10 +256,10 @@ async def add_quote(
             text=f"added a quote ({vendor}, ${cents // 100:,}) to {it.title}",
             item_id=task_id,
         )
-    return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
+    return RedirectResponse(url=f"/tasks?task={task_id}", status_code=303)
 
 
-@router.post("/selling/{task_id}/delete")
+@router.post("/tasks/{task_id}/delete")
 def delete_task(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -270,10 +270,10 @@ def delete_task(
     if it and it.type == "task":
         conn.execute("DELETE FROM items WHERE id=?", (task_id,))
         activity_repo.log(conn, actor=who, verb="deleted", text=f"deleted task {it.title}")
-    return RedirectResponse(url="/selling", status_code=303)
+    return RedirectResponse(url="/tasks", status_code=303)
 
 
-@router.post("/selling/{task_id}/complete")
+@router.post("/tasks/{task_id}/complete")
 def complete_task(
     task_id: int,
     request: Request,
@@ -282,7 +282,7 @@ def complete_task(
 ):
     """Mark a task Done. If called via HTMX returns an empty 200 so the
     caller can swap/remove the row; otherwise redirects back where we came
-    from (so the plain-HTML form in /selling still works)."""
+    from (so the plain-HTML form in /tasks still works)."""
     from fastapi.responses import HTMLResponse
     it = items_repo.get(conn, task_id)
     if it and it.type == "task":
@@ -294,7 +294,7 @@ def complete_task(
     return RedirectResponse(url=request.headers.get("referer", "/"), status_code=303)
 
 
-@router.post("/selling/{task_id}/quotes/choose")
+@router.post("/tasks/{task_id}/quotes/choose")
 def choose_quote(
     task_id: int,
     conn: Annotated[sqlite3.Connection, Depends(get_db)],
@@ -304,4 +304,4 @@ def choose_quote(
         quotes_repo.clear_choice(conn, task_id)
     else:
         quotes_repo.choose(conn, task_id=task_id, quote_id=int(quote_id))
-    return RedirectResponse(url=f"/selling?task={task_id}", status_code=303)
+    return RedirectResponse(url=f"/tasks?task={task_id}", status_code=303)

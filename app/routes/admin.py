@@ -13,7 +13,8 @@ from app.jobs import backup as backup_job
 router = APIRouter()
 
 
-@router.post("/admin/backup", response_class=PlainTextResponse)
+# GET too, so the URL works when opened from a browser.
+@router.api_route("/admin/backup", methods=["GET", "POST"], response_class=PlainTextResponse)
 def manual_backup(request: Request, cfg: Annotated[Config, Depends(get_config)]):
     out = backup_job.run_once(cfg.db_path, cfg.backup_dir, cfg.backup_keep)
     return f"Wrote {out.name}\n"

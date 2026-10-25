@@ -2,7 +2,7 @@
 
 Each tile is derived from live data so numbers never drift from the pages
 they summarize (houses toured count the same rows as /houses, prep cost is
-the same sum as the Selling header).
+the same sum as the Tasks header).
 """
 from __future__ import annotations
 

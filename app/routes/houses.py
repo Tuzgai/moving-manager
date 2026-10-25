@@ -46,6 +46,14 @@ def _int(s):
     return int(s) if s.lstrip("-").isdigit() else None
 
 
+def _area(s):
+    """Square footage: whole numbers stay ints, decimals (e.g. 1640.5) are kept."""
+    n = _float((s or "").replace(",", "").strip())
+    if n is None or n < 0:
+        return None
+    return int(n) if n.is_integer() else n
+
+
 def _float(s):
     try:
         return float(s) if s else None
@@ -229,7 +237,7 @@ def new_house_save(
     if (c := _cents(price)) is not None: fields["price_cents"] = c
     if (b := _float(beds)) is not None: fields["beds"] = b
     if (ba := _float(baths)) is not None: fields["baths"] = ba
-    if (sf := _int(sqft)) is not None: fields["sqft"] = sf
+    if (sf := _area(sqft)) is not None: fields["sqft"] = sf
     if (yr := _int(year_built)) is not None: fields["year_built"] = yr
     if image_url: fields["other_links"] = [{"label": "Hero image", "url": image_url}]
 
@@ -367,7 +375,7 @@ async def edit_house(
         h,
         address=g("address"), listing_url=g("listing_url"),
         price_cents=_cents(g("price")), beds=_float(g("beds")), baths=_float(g("baths")),
-        sqft=_int(g("sqft")), year_built=_int(g("year_built")), lot=g("lot"),
+        sqft=_area(g("sqft")), year_built=_int(g("year_built")), lot=g("lot"),
         garage=g("garage"), taxes_cents=_cents(g("taxes")), tour_date=g("tour_date"),
         best_thing=g("best_thing"), worst_thing=g("worst_thing"), custom=custom,
     )

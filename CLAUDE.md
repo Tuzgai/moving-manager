@@ -55,6 +55,31 @@ HOUSEHOLD_HUB_SCRATCH_DIR=/tmp/hh-dev uv run uvicorn app.main:app --host 127.0.0
 
 Tests use temp DBs (`tmp_path`) and must never touch the real data dir. Keep it that way: no test may call `app_config.load()` unpatched against a real DB. `tests/test_safety.py` covers the seed guard.
 
+## Testing changes
+
+`uv run pytest` is necessary but not sufficient. **Every functional change (routes, templates, forms, JS/HTMX behaviour) must also be exercised in a real browser** before it's called done. Unit tests via `TestClient` only see the query strings/HTML; they can't catch what a browser actually submits or re-renders.
+
+Browser check recipe (scratch DB only, see "Protecting the database"):
+
+```bash
+export HOUSEHOLD_HUB_SCRATCH_DIR=/tmp/hh-dev          # throwaway; never the live data dir
+uv run python scripts/seed.py                          # seeds houses, tasks, quotes, notes
+nohup uv run uvicorn app.main:app --host 127.0.0.1 --port 8766 >/tmp/hh-dev/server.log 2>&1 &
+echo $! > /tmp/hh-dev/pid                              # so you can stop it later
+```
+
+Then drive it with Playwright (in Claude cloud sessions Chromium + Playwright are preinstalled: `require('playwright')` works from any directory, `chromium.launch()` needs no options, and don't `playwright install`). Write the script outside the repo. Assert on the DOM state *and* `page.url()` after each interaction, and run the failing scenario first to confirm it reproduces. Stop the server with `kill $(cat /tmp/hh-dev/pid)`. Avoid `pkill -f` patterns that match your own shell command line (it kills the shell, exit 144).
+
+Gotchas learned the hard way:
+- Unchecked checkboxes send nothing. A GET filter form whose route has a non-zero default (e.g. `hide_done: int = 1` on `/tasks`) will snap back to the default when the box is unchecked. Pair the checkbox with a preceding `<input type="hidden" name="..." value="0">`; Starlette takes the last value, so checked wins.
+- Filter/view state (`group_by`, `show`, `hide_done`) is carried purely in the query string, so any link that navigates within the screen must pass it along or the state silently resets.
+- Route tests need `with TestClient(app) as client:` so the lifespan runs migrations. Point the app at `tmp_path` by monkeypatching `app.config.load` (pattern in `tests/test_task_complete.py`), then insert fixtures with `db_mod.connect(tmp_path / "data" / "db.sqlite")` and `items_repo.insert(...)`.
+- Seeded data has its own IDs; look up links from the page rather than hard-coding task ids.
+
+## Git workflow in cloud sessions
+
+Cloud sessions are assigned a feature branch (e.g. `ccr-…`). Commit and push there, never to `main` (which auto-deploys). Opening a PR is a separate, explicit request.
+
 ## Layout
 
 - `app/main.py` wiring and lifespan; `app/routes/` one module per screen; `app/repo/` all SQL lives here (routes don't write raw SQL); `app/templates/` Jinja; `app/jobs/backup.py` nightly SQLite `.backup` scheduler.

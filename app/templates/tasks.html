@@ -18,13 +18,9 @@
       <div style="font-family: var(--mono); font-weight: 500; font-size: 18px">{{ spent_cents | money }}</div>
     </div>
   </div>
-  <details style="position: relative">
+  <details class="popover-details" style="position: relative">
     <summary class="btn" style="list-style: none; display: inline-flex; align-items: center">+ New task</summary>
-    <form method="post" action="/tasks/tasks/new"
-          style="position: absolute; right: 0; top: 48px; z-index: 10; background: #fff;
-                 border: 1px solid var(--line); border-radius: 8px; padding: 16px;
-                 width: 320px; display: flex; flex-direction: column; gap: 8px;
-                 box-shadow: 0 8px 24px rgba(0,0,0,0.08)">
+    <form method="post" action="/tasks/tasks/new" class="popover-form">
       <label style="font-size: 12px; color: var(--ink-mute)">Title
         <input name="title" required style="width: 100%; margin-top: 4px">
       </label>

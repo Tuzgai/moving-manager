@@ -211,8 +211,19 @@ textarea { padding: 10px 12px; resize: vertical; }
   line-height: 1; cursor: pointer; padding: 0 2px;
 }
 
+.popover-form {
+  position: absolute; right: 0; top: 48px; z-index: 10; background: #fff;
+  border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+  width: 320px; display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
 @media (max-width: 760px) {
   .main { padding: 20px 16px 40px; }
+  /* The popover is anchored to its button, which can sit anywhere on a wrapped
+     header; on a phone, drop it into the flow at full width instead. */
+  .popover-details { flex-basis: 100%; }
+  .popover-form { position: static; width: auto; margin-top: 8px; }
   /* Sidebar becomes a compact top bar: title + user picker, search, then a
      sideways-scrolling row of nav links. */
   .sidebar {
